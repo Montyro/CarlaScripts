@@ -96,7 +96,7 @@ def save_scan(scan,environment_ready,counter):
         exit()
 
     if environment_ready == True:
-        scan.save_to_disk('_out/%06d.ply' % scan.frame) # Save the scan
+        scan.save_to_disk('_out/{}.ply' % scan.frame) # Save the scan
         counter = counter+1
     #Add to poses list
 
@@ -390,55 +390,151 @@ def main(config):
         image_size_y = 1080
         camera_transform = carla.Transform(carla.Location(x=1.5, z=1.63))#, carla.Rotation(pitch=-15))
 
-       
+       #### RGB Cameras ####
         # RGB Camera 1
         # Find blueprint
         camera_bp = blueprint_library.find('sensor.camera.rgb')
         #Configure camera parameters
-        camera_bp.set_attribute('fov',str(90)) #In cm
+        camera_bp.set_attribute('fov',str(40)) #In cm
         camera_bp.set_attribute('image_size_x',str(image_size_x))
         camera_bp.set_attribute('image_size_y',str(image_size_y))
-        
+
+        #RGB Camera 2
+        # Find blueprint
+        camera_bp_2 = blueprint_library.find('sensor.camera.rgb')
+        #Configure camera parameters
+        camera_bp_2.set_attribute('fov',str(60)) #In cm
+        camera_bp_2.set_attribute('image_size_x',str(image_size_x))
+        camera_bp_2.set_attribute('image_size_y',str(image_size_y))
+         #RGB Camera 3
+        # Find blueprint
+        camera_bp_3 = blueprint_library.find('sensor.camera.rgb')
+        #Configure camera parameters
+        camera_bp_3.set_attribute('fov',str(80)) #In cm
+        camera_bp_3.set_attribute('image_size_x',str(image_size_x))
+        camera_bp_3.set_attribute('image_size_y',str(image_size_y))
+         #RGB Camera 4
+        # Find blueprint
+        camera_bp_4 = blueprint_library.find('sensor.camera.rgb')
+        #Configure camera parameters
+        camera_bp_4.set_attribute('fov',str(100)) #In cm
+        camera_bp_4.set_attribute('image_size_x',str(image_size_x))
+        camera_bp_4.set_attribute('image_size_y',str(image_size_y))
+         #RGB Camera 5
+        # Find blueprint
+        camera_bp_5 = blueprint_library.find('sensor.camera.rgb')
+        #Configure camera parameters
+        camera_bp_5.set_attribute('fov',str(120)) #In cm
+        camera_bp_5.set_attribute('image_size_x',str(image_size_x))
+        camera_bp_5.set_attribute('image_size_y',str(image_size_y))
+
         #Spawn the camera sensor
-        camera_rgb = world.spawn_actor(
+        camera_rgb_1 = world.spawn_actor(
             camera_bp,
             camera_transform,
             attach_to=vehicle)
-        sensor_list.append(camera_rgb)
-        
+        camera_rgb_2 = world.spawn_actor(
+            camera_bp_2,
+            camera_transform,
+            attach_to=vehicle)
+        camera_rgb_3 = world.spawn_actor(
+            camera_bp_3,
+            camera_transform,
+            attach_to=vehicle)
+        camera_rgb_4 = world.spawn_actor(
+            camera_bp_4,
+            camera_transform,
+            attach_to=vehicle)
+        camera_rgb_5 = world.spawn_actor(
+            camera_bp_5,
+            camera_transform,
+            attach_to=vehicle)
 
-        # Let's add now a "depth" camera attached to the vehicle. Note that the
-        # transform we give here is now relative to the vehicle.
-        semantic_s_bp = blueprint_library.find('sensor.lidar.ray_cast_semantic')
-        semantic_s_bp.set_attribute('upper_fov',str(3))
-        semantic_s_bp.set_attribute('lower_fov',str(-25))
-        semantic_s_bp.set_attribute('range', '80.0')
-        semantic_s_bp.set_attribute('channels', '64')
-        #semantic_s_bp.set_attribute('points_per_second',str(10*64*360/0.8))
-        semantic_s_bp.set_attribute('points_per_second',str(5*64*360/0.08))
-        semantic_s = world.spawn_actor(semantic_s_bp,  carla.Transform(carla.Location(z=1.63)), attach_to=actor_list[0])
-        sensor_list.append(semantic_s)
+        sensor_list.append(camera_rgb_1)
+        sensor_list.append(camera_rgb_2)
+        sensor_list.append(camera_rgb_3)
+        sensor_list.append(camera_rgb_4)
+        sensor_list.append(camera_rgb_5)
 
-        lidar_bp = blueprint_library.find('sensor.lidar.ray_cast')
-        lidar_bp.set_attribute('upper_fov',str(3))
-        lidar_bp.set_attribute('lower_fov',str(-25))
-        lidar_bp.set_attribute('range', '80.0')
-        lidar_bp.set_attribute('channels', '64')
-        lidar_bp.set_attribute('dropoff_general_rate', '0')
-        lidar_bp.set_attribute('dropoff_intensity_limit', '0')
-        lidar_bp.set_attribute('dropoff_zero_intensity','0')
+
+
+        #### Depth Cameras ####
+        # Depth Camera 1
+        # Find blueprint
+        depth_camera_bp = blueprint_library.find('sensor.camera.depth')
+        #Configure camera parameters
+        depth_camera_bp.set_attribute('fov',str(40)) #In cm
+        depth_camera_bp.set_attribute('image_size_x',str(image_size_x))
+        depth_camera_bp.set_attribute('image_size_y',str(image_size_y))
+
+        #Depth Camera 2
+        # Find blueprint
+        depth_camera_bp_2 = blueprint_library.find('sensor.camera.depth')
+        #Configure camera parameters
+        depth_camera_bp_2.set_attribute('fov',str(60)) #In cm
+        depth_camera_bp_2.set_attribute('image_size_x',str(image_size_x))
+        depth_camera_bp_2.set_attribute('image_size_y',str(image_size_y))
         
-        #semantic_s_bp.set_attribute('points_per_second',str(10*64*360/0.8))
-        lidar_bp.set_attribute('points_per_second',str(5*64*360/0.08))
-        lidar_s = world.spawn_actor(lidar_bp,  carla.Transform(carla.Location(z=1.63)), attach_to=actor_list[0])
-        sensor_list.append(lidar_s)
+        #Depth Camera 3
+        # Find blueprint
+        depth_camera_bp_3 = blueprint_library.find('sensor.camera.depth')
+        #Configure camera parameters
+        depth_camera_bp_3.set_attribute('fov',str(80)) #In cm
+        depth_camera_bp_3.set_attribute('image_size_x',str(image_size_x))
+        depth_camera_bp_3.set_attribute('image_size_y',str(image_size_y))
+
+        #Depth Camera 4
+        # Find blueprint
+        depth_camera_bp_4 = blueprint_library.find('sensor.camera.depth')
+        #Configure camera parameters
+        depth_camera_bp_4.set_attribute('fov',str(100)) #In cm
+        depth_camera_bp_4.set_attribute('image_size_x',str(image_size_x))
+        depth_camera_bp_4.set_attribute('image_size_y',str(image_size_y))
+
+        #Depth Camera 5
+        # Find blueprint
+        depth_camera_bp_5 = blueprint_library.find('sensor.camera.depth')
+        #Configure camera parameters
+        depth_camera_bp_5.set_attribute('fov',str(120)) #In cm
+        depth_camera_bp_5.set_attribute('image_size_x',str(image_size_x))
+        depth_camera_bp_5.set_attribute('image_size_y',str(image_size_y))
+
+        #Spawn the camera sensor
+        depth_camera_1 = world.spawn_actor(
+            depth_camera_bp,
+            camera_transform,
+            attach_to=vehicle)
+        depth_camera_2 = world.spawn_actor(
+            depth_camera_bp_2,
+            camera_transform,
+            attach_to=vehicle)
+        depth_camera_3 = world.spawn_actor(
+            depth_camera_bp_3,
+            camera_transform,
+            attach_to=vehicle)
+        depth_camera_4 = world.spawn_actor(
+            depth_camera_bp_4,
+            camera_transform,
+            attach_to=vehicle)
+        depth_camera_5 = world.spawn_actor(
+            depth_camera_bp_5,
+            camera_transform,
+            attach_to=vehicle)
+        
+        sensor_list.append(depth_camera_1)
+        sensor_list.append(depth_camera_2)
+        sensor_list.append(depth_camera_3)
+        sensor_list.append(depth_camera_4)
+        sensor_list.append(depth_camera_5)
+
+
+
         first_frame = True
-        
         
         ##############################################################################################
         # Create a synchronous mode context.
         ##############################################################################################
-        with CarlaSyncMode(world, lidar_s, semantic_s, fps=10) as sync_mode:
+        with CarlaSyncMode(world, camera_rgb_1,camera_rgb_2,camera_rgb_3,camera_rgb_4,camera_rgb_5,depth_camera_1,depth_camera_2,depth_camera_3,depth_camera_4,depth_camera_5, fps=10) as sync_mode:
             counter = 0
             while True:
                 if should_quit():
@@ -447,7 +543,7 @@ def main(config):
 
                 
                 # Advance the simulation and wait for the data.
-                snapshot, lidar_scan, semantic_scan = sync_mode.tick(timeout=10.0) #Ajusta timeout si el pc es muy lento
+                snapshot, rgb_1,rgb_2,rgb_3,rgb_4,rgb_5,depth_1,depth_2,depth_3,depth_4,depth_5 = sync_mode.tick(timeout=10.0) #Ajusta timeout si el pc es muy lento
                 if first_frame:
                     #initial_camera_position = vehicle.get_location() + camera_transform.location
                     initial_camera_rotation = vehicle.get_transform().rotation
@@ -467,17 +563,29 @@ def main(config):
                 #print(translation_v)
 
                 # Save the scans
-                #lidar_scan.save_to_disk('_lidar_out/%06d.ply' % lidar_scan.frame) # Save the scan
-                #semantic_scan.save_to_disk('_s_lidar_out/%06d.ply' % semantic_scan.frame) # Save the scan
                 counter+=1
-                #image_rgb_3.save_to_disk('_out_rgb3/%06d.png' % image_rgb_3.frame) # Save the scan
-                #image_rgb_4.save_to_disk('_out_rgb4/%06d.png' % image_rgb_4.frame) # Save the scan
-                #image_rgb_5.save_to_disk('_out_rgb5/%06d.png' % image_rgb_5.frame) # Save the scan
+                dataset_path = 'dataset/sequences/00/'
+
+                cc = carla.ColorConverter.Depth
+
+                rgb_1.save_to_disk(dataset_path+('cam1/{}.png').format(rgb_1.frame)) # Save the scan
+                rgb_2.save_to_disk(dataset_path+('cam2/{}.png').format(rgb_2.frame)) # Save the scan
+                rgb_3.save_to_disk(dataset_path+('cam3/{}.png').format(rgb_3.frame)) # Save the scan
+                rgb_4.save_to_disk(dataset_path+('cam4/{}.png').format(rgb_4.frame)) # Save the scan
+                rgb_5.save_to_disk(dataset_path+('cam5/{}.png').format(rgb_5.frame)) # Save the scan
+
+                depth_1.save_to_disk(dataset_path+('d_cam1/{}.png').format(depth_1.frame),cc) # Save the scan
+                depth_2.save_to_disk(dataset_path+('d_cam2/{}.png').format(depth_2.frame),cc) # Save the scan
+                depth_3.save_to_disk(dataset_path+('d_cam3/{}.png').format(depth_3.frame),cc) # Save the scan
+                depth_4.save_to_disk(dataset_path+('d_cam4/{}.png').format(depth_4.frame),cc) # Save the scan
+                depth_5.save_to_disk(dataset_path+('d_cam5/{}.png').format(depth_5.frame),cc) # Save the scan
+                #image_rgb_4.save_to_disk('_out_rgb4/{}.png' % image_rgb_4.frame) # Save the scan
+                #image_rgb_5.save_to_disk('_out_rgb5/{}.png' % image_rgb_5.frame) # Save the scan
 
                 
                 #Save poses
-                with open("poses.txt", 'w') as posfile:
-                    posfile.write("{} {} {} {} {} {}".format(lidar_scan.transform.rotation.roll,lidar_scan.transform.rotation.pitch,lidar_scan.transform.rotation.yaw,lidar_scan.transform.location.x,lidar_scan.transform.location.y,lidar_scan.transform.location.z))
+                with open(dataset_path+"poses.txt", 'w') as posfile:
+                    posfile.write("{} {} {} {} {} {}".format(rgb_1.transform.rotation.roll,rgb_1.transform.rotation.pitch,rgb_1.transform.rotation.yaw,rgb_1.transform.location.x,rgb_1.transform.location.y,rgb_1.transform.location.z))
                     #posfile.write(" ".join(map(str,[r for r in rotation_v[0]]))+" "+str(translation_v[1])+" ")
                     #posfile.write(" ".join(map(str,[r for r in rotation_v[1]]))+" "+str(translation_v[0])+" ")
                     #posfile.write(" ".join(map(str,[r for r in rotation_v[2]]))+" "+str(translation_v[2])+" ")
