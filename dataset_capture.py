@@ -96,7 +96,7 @@ def save_scan(scan,environment_ready,counter):
         exit()
 
     if environment_ready == True:
-        scan.save_to_disk('_out/%06d.ply' % scan.frame) # Save the scan
+        scan.save_to_disk('_out/{}.ply' % scan.frame) # Save the scan
         counter = counter+1
     #Add to poses list
 
@@ -390,22 +390,7 @@ def main(config):
         image_size_y = 1080
         camera_transform = carla.Transform(carla.Location(x=1.5, z=1.63))#, carla.Rotation(pitch=-15))
 
-       
-        # RGB Camera 1
-        # Find blueprint
-        camera_bp = blueprint_library.find('sensor.camera.rgb')
-        #Configure camera parameters
-        camera_bp.set_attribute('fov',str(90)) #In cm
-        camera_bp.set_attribute('image_size_x',str(image_size_x))
-        camera_bp.set_attribute('image_size_y',str(image_size_y))
-        
-        #Spawn the camera sensor
-        camera_rgb = world.spawn_actor(
-            camera_bp,
-            camera_transform,
-            attach_to=vehicle)
-        sensor_list.append(camera_rgb)
-        
+       ### LiDAR ###
 
         # Let's add now a "depth" camera attached to the vehicle. Note that the
         # transform we give here is now relative to the vehicle.
@@ -419,26 +404,18 @@ def main(config):
         semantic_s = world.spawn_actor(semantic_s_bp,  carla.Transform(carla.Location(z=1.63)), attach_to=actor_list[0])
         sensor_list.append(semantic_s)
 
-        lidar_bp = blueprint_library.find('sensor.lidar.ray_cast')
-        lidar_bp.set_attribute('upper_fov',str(3))
-        lidar_bp.set_attribute('lower_fov',str(-25))
-        lidar_bp.set_attribute('range', '80.0')
-        lidar_bp.set_attribute('channels', '64')
-        lidar_bp.set_attribute('dropoff_general_rate', '0')
-        lidar_bp.set_attribute('dropoff_intensity_limit', '0')
-        lidar_bp.set_attribute('dropoff_zero_intensity','0')
-        
-        #semantic_s_bp.set_attribute('points_per_second',str(10*64*360/0.8))
-        lidar_bp.set_attribute('points_per_second',str(5*64*360/0.08))
-        lidar_s = world.spawn_actor(lidar_bp,  carla.Transform(carla.Location(z=1.63)), attach_to=actor_list[0])
-        sensor_list.append(lidar_s)
+        dataset_path = 'D:/semlidar/dataset/sequences/63/'
+
         first_frame = True
-        
-        
+        with open(dataset_path+"poses.txt", 'w') as posfile:
+             posfile.write("## {} {} {} {} {} {}".format("roll","pitch","yaw","x","y","z"))
+
+
+
         ##############################################################################################
         # Create a synchronous mode context.
         ##############################################################################################
-        with CarlaSyncMode(world, lidar_s, semantic_s, fps=10) as sync_mode:
+        with CarlaSyncMode(world, semantic_s, fps=10) as sync_mode:
             counter = 0
             while True:
                 if should_quit():
@@ -447,7 +424,7 @@ def main(config):
 
                 
                 # Advance the simulation and wait for the data.
-                snapshot, lidar_scan, semantic_scan = sync_mode.tick(timeout=10.0) #Ajusta timeout si el pc es muy lento
+                snapshot, semantic_scan = sync_mode.tick(timeout=10.0) #Ajusta timeout si el pc es muy lento
                 if first_frame:
                     #initial_camera_position = vehicle.get_location() + camera_transform.location
                     initial_camera_rotation = vehicle.get_transform().rotation
@@ -467,17 +444,13 @@ def main(config):
                 #print(translation_v)
 
                 # Save the scans
-                #lidar_scan.save_to_disk('_lidar_out/%06d.ply' % lidar_scan.frame) # Save the scan
-                #semantic_scan.save_to_disk('_s_lidar_out/%06d.ply' % semantic_scan.frame) # Save the scan
                 counter+=1
-                #image_rgb_3.save_to_disk('_out_rgb3/%06d.png' % image_rgb_3.frame) # Save the scan
-                #image_rgb_4.save_to_disk('_out_rgb4/%06d.png' % image_rgb_4.frame) # Save the scan
-                #image_rgb_5.save_to_disk('_out_rgb5/%06d.png' % image_rgb_5.frame) # Save the scan
+                semantic_scan.save_to_disk(dataset_path+'/scan/%06d.ply' % semantic_scan.frame) # Save the scan
 
                 
                 #Save poses
-                with open("poses.txt", 'w') as posfile:
-                    posfile.write("{} {} {} {} {} {}".format(lidar_scan.transform.rotation.roll,lidar_scan.transform.rotation.pitch,lidar_scan.transform.rotation.yaw,lidar_scan.transform.location.x,lidar_scan.transform.location.y,lidar_scan.transform.location.z))
+                with open(dataset_path+"poses.txt", 'a') as posfile:
+                    posfile.write("{} {} {} {} {} {}".format(semantic_scan.transform.rotation.roll,semantic_scan.transform.rotation.pitch,semantic_scan.transform.rotation.yaw,semantic_scan.transform.location.x,semantic_scan.transform.location.y,semantic_scan.transform.location.z))
                     #posfile.write(" ".join(map(str,[r for r in rotation_v[0]]))+" "+str(translation_v[1])+" ")
                     #posfile.write(" ".join(map(str,[r for r in rotation_v[1]]))+" "+str(translation_v[0])+" ")
                     #posfile.write(" ".join(map(str,[r for r in rotation_v[2]]))+" "+str(translation_v[2])+" ")

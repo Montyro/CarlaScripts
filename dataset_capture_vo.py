@@ -528,9 +528,14 @@ def main(config):
         sensor_list.append(depth_camera_5)
 
 
+        dataset_path = 'D:/dataset_odometry/dataset/sequences/02/'
 
         first_frame = True
-        
+        with open(dataset_path+"poses.txt", 'w') as posfile:
+             posfile.write("## {} {} {} {} {} {}".format("roll","pitch","yaw","x","y","z"))
+
+
+
         ##############################################################################################
         # Create a synchronous mode context.
         ##############################################################################################
@@ -564,7 +569,6 @@ def main(config):
 
                 # Save the scans
                 counter+=1
-                dataset_path = 'dataset/sequences/00/'
 
                 cc = carla.ColorConverter.Depth
 
@@ -584,7 +588,7 @@ def main(config):
 
                 
                 #Save poses
-                with open(dataset_path+"poses.txt", 'w') as posfile:
+                with open(dataset_path+"poses.txt", 'a') as posfile:
                     posfile.write("{} {} {} {} {} {}".format(rgb_1.transform.rotation.roll,rgb_1.transform.rotation.pitch,rgb_1.transform.rotation.yaw,rgb_1.transform.location.x,rgb_1.transform.location.y,rgb_1.transform.location.z))
                     #posfile.write(" ".join(map(str,[r for r in rotation_v[0]]))+" "+str(translation_v[1])+" ")
                     #posfile.write(" ".join(map(str,[r for r in rotation_v[1]]))+" "+str(translation_v[0])+" ")
