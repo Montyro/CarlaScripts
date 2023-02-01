@@ -184,8 +184,10 @@ def main(config):
         print(client.get_available_maps())
 
         #world = client.load_world("/Game/Carla/Maps/"+config['map'])
-        world = client.get_world()
+
         #exit()
+        world = client.get_world()
+        
         
         #############################################################################
         # Set up synchronous mode
@@ -314,6 +316,10 @@ def main(config):
                 break
 
             veh_type = random.choice(list(vehicle_amounts.keys()))
+
+            if vehicle_amounts[veh_type][0] <= 0:
+                vehicle_amounts.pop(veh_type)
+                continue
             blueprint = random.choice(vehicle_amounts[veh_type][1])
 
             vehicle_amounts[veh_type] = (vehicle_amounts[veh_type][0]-1,vehicle_amounts[veh_type][1])
@@ -404,7 +410,7 @@ def main(config):
         semantic_s = world.spawn_actor(semantic_s_bp,  carla.Transform(carla.Location(z=1.63)), attach_to=actor_list[0])
         sensor_list.append(semantic_s)
 
-        dataset_path = 'D:/semlidar/dataset/sequences/63/'
+        dataset_path = 'D:/semlidar/dataset/sequences/65/'
 
         first_frame = True
         with open(dataset_path+"poses.txt", 'w') as posfile:

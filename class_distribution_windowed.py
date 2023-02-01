@@ -13,10 +13,8 @@ import json
 
 def percentage(x):
     """Compute softmax values for each sets of scores in x."""
-    x= np.array(x,dtype=np.int64)
-    print(x)
+    x= np.array(x)
     dist = np.round(x*100 / x.sum(),3)
-    print(dist)
     return dist
 
 #Load configuration file
@@ -60,17 +58,11 @@ parser.add_argument('--output_name','-o',
     help='Print debug information.',
 )
 
-parser.add_argument('--start_scan','-ss',
+parser.add_argument('--window_size','-ws',
     type=int,
-    default=-1,
+    default=100,
     required=False,
-    help='Slice index start',
-)
-parser.add_argument('--end_scan','-es',
-    type=int,
-    default=-1,
-    required=False,
-    help='Slice index end',
+    help='Window size',
 )
 
 FLAGS,_ = parser.parse_known_args()
@@ -89,8 +81,6 @@ if FLAGS.sequence != "all":
     # does sequence folder exist?
     label_paths = os.path.join(FLAGS.dataset, "sequences",
                                     FLAGS.sequence, "labels")
-
-    print(label_paths)
     if os.path.isdir(label_paths):
         print("Labels folder exists! Using labels from %s" % label_paths)
     else:
@@ -102,13 +92,9 @@ if FLAGS.sequence != "all":
 
     total_counts = {}
     
-    if FLAGS.start_scan != -1:
-        label_names = label_names[FLAGS.start_scan:FLAGS.end_scan]
-
     label_names = tqdm(label_names)
     label_names.set_description("Sequence: {}".format(FLAGS.sequence))
 
-    
     for scan in label_names:
         labels = np.fromfile(scan,dtype=np.uint16)
         labels = labels.reshape((len(labels))//2,2)[:,0]
@@ -117,13 +103,15 @@ if FLAGS.sequence != "all":
         total_counts = Counter(total_counts) + Counter(counts)
 else:
     #training_sequences = ["00","01","02","03","04","05","06","07","09","10"]
-    #training_sequences = ["71","72","93","94","95","96","97"]
     #training_sequences = ["71","72","73","74","75","76","77"]
-    #training_sequences = ["101","102","103","104","105","106","107","108","109","111","112","113","114","115","116","117"]
+    training_sequences = ["71","72","93","94","95","96","97"]
+    training_sequences = ["101","102","103","104","105","106","107"]#,"108","109"]
+    training_sequences = ["111","113","114","115","116","117"]
     training_sequences = ["60","61","62","63","64","65","66","67"]
-    total_counts = {}
+    dataset_counts = {}
 
     for sequence in training_sequences:
+        total_counts = {}
          # does sequence folder exist?
         label_paths = os.path.join(FLAGS.dataset, "sequences",
                                         sequence, "labels")
@@ -138,38 +126,75 @@ else:
         label_names = tqdm(label_names)
         label_names.set_description("Sequence: {}".format(sequence))
 
+        counter = 0
+        window_counts = {}
+        windows_processed = 0
         for scan in label_names:
-            labels = np.fromfile(scan,dtype=np.uint16)
-            labels = labels.reshape((len(labels))//2,2)[:,0]
-            unique, counts = np.unique(labels, return_counts=True)
-            counts = dict(zip(unique,counts))
-            total_counts = Counter(total_counts) + Counter(counts)
+            if counter == FLAGS.window_size:
+                #Get and "add" labels
+                labels = np.fromfile(scan,dtype=np.uint16)
+                labels = labels.reshape((len(labels))//2,2)[:,0]
+                unique, counts = np.unique(labels, return_counts=True)
+                counts = dict(zip(unique,counts))
+                window_counts = Counter(window_counts) + Counter(counts)
+
+                
+                for key in window_counts.keys():
+                    if key not in list(total_counts.keys()):
+                        total_counts[key] = [0 for a in np.arange(windows_processed)]
+                        total_counts[key].append(window_counts[key])
+                    else:
+                        total_counts[key].append(window_counts[key])
+                
+                
+                for key in total_counts.keys():
+                    if key not in list(window_counts.keys()):
+                        total_counts[key].append(0)
+                window_counts = {}
+                counter = 0
+                windows_processed += 1
+            else:
+                #Get and "add" labels
+                labels = np.fromfile(scan,dtype=np.uint16)
+                labels = labels.reshape((len(labels))//2,2)[:,0]
+                unique, counts = np.unique(labels, return_counts=True)
+                counts = dict(zip(unique,counts))
+                window_counts = Counter(window_counts) + Counter(counts)
+                counter +=1
+    
+        dataset_counts[sequence] = total_counts
+
+
 
 # endregion
 
 #Process results
-keys = list(total_counts.keys())
-conversion = np.vectorize(classes['labels'].get)(keys)
 
+
+print(dataset_counts)
 #Counts per class
-total_counts = dict(zip(conversion,[int(a) for a in list(total_counts.values())]))
-total_distribution = dict(zip(conversion,percentage([int(a) for a in list(total_counts.values())])))
+dataset_counts_fixed_int = {}
+for sequence_no,sequence_dict in dataset_counts.items():
+    keys = list(sequence_dict.keys())
+    conversion = np.vectorize(classes['labels'].get)(keys)
+    converted_lists = []
+    for class_list in sequence_dict.values():
+        converted_list = []
+        for item in class_list:
+            converted_list.append(int(item))
+        converted_lists.append(converted_list)
 
-data = {'counts':total_counts,'percentage':total_distribution}
+    sequence_counts = dict(zip(conversion,converted_lists))
+    dataset_counts_fixed_int[int(sequence_no)] = sequence_counts
+#total_distribution = dict(zip(conversion,percentage(list(total_counts.values()))))
+
+print(dataset_counts_fixed_int)
+data = {'counts':dataset_counts_fixed_int}#,'percentage':total_distribution}
 
 if FLAGS.sequence != "all":
-    with open('class_distribution_{}_seq_{}.json'.format(FLAGS.output_name,FLAGS.sequence),'w') as f:
+    with open('class_distribution_windowed_{}_seq_{}.json'.format(FLAGS.output_name,FLAGS.sequence),'w') as f:
         json.dump(data,f,indent=4)
 else:
-    print('class_distribution_{}.json'.format(FLAGS.output_name))
-    with open('class_distribution_{}.json'.format(FLAGS.output_name),'w') as f:
+    with open('class_distribution_windowed_{}.json'.format(FLAGS.output_name),'w') as f:
         json.dump(data,f,indent=4)
-
-plt.bar(range(len(total_counts)),list(total_counts.values()),align='center')
-plt.xticks(range(len(total_counts)), list(total_counts.keys()),rotation=90)
-plt.yscale("log")
-plt.show()
-
-print(total_counts)
-print(total_distribution)
 
