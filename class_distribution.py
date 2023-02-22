@@ -135,6 +135,7 @@ else:
         label_names = [os.path.join(dp, f) for dp, dn, fn in os.walk(
                 os.path.expanduser(label_paths)) for f in fn]
         label_names.sort()
+        label_names = label_names[:4000]
         label_names = tqdm(label_names)
         label_names.set_description("Sequence: {}".format(sequence))
 

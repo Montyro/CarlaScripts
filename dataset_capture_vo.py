@@ -471,7 +471,7 @@ def main(config):
         # Find blueprint
         depth_camera_bp_2 = blueprint_library.find('sensor.camera.depth')
         #Configure camera parameters
-        depth_camera_bp_2.set_attribute('fov',str(60)) #In cm
+        depth_camera_bp_2.set_attribute('fov',str(40)) #In cm
         depth_camera_bp_2.set_attribute('image_size_x',str(image_size_x))
         depth_camera_bp_2.set_attribute('image_size_y',str(image_size_y))
         
@@ -571,6 +571,7 @@ def main(config):
                 counter+=1
 
                 cc = carla.ColorConverter.Depth
+                cc2 = carla.ColorConverter.LogarithmicDepth
 
                 rgb_1.save_to_disk(dataset_path+('cam1/{}.png').format(rgb_1.frame)) # Save the scan
                 rgb_2.save_to_disk(dataset_path+('cam2/{}.png').format(rgb_2.frame)) # Save the scan
@@ -579,7 +580,7 @@ def main(config):
                 rgb_5.save_to_disk(dataset_path+('cam5/{}.png').format(rgb_5.frame)) # Save the scan
 
                 depth_1.save_to_disk(dataset_path+('d_cam1/{}.png').format(depth_1.frame),cc) # Save the scan
-                depth_2.save_to_disk(dataset_path+('d_cam2/{}.png').format(depth_2.frame),cc) # Save the scan
+                depth_2.save_to_disk(dataset_path+('d_cam2/{}.png').format(depth_2.frame),cc2) # Save the scan
                 depth_3.save_to_disk(dataset_path+('d_cam3/{}.png').format(depth_3.frame),cc) # Save the scan
                 depth_4.save_to_disk(dataset_path+('d_cam4/{}.png').format(depth_4.frame),cc) # Save the scan
                 depth_5.save_to_disk(dataset_path+('d_cam5/{}.png').format(depth_5.frame),cc) # Save the scan
