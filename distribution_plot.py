@@ -3,6 +3,8 @@ import json
 import argparse
 import numpy as np
 import seaborn as sns
+#sns.set()
+#plt.style.use("default")
 #Aux functions
 def percentage(x):
     """Compute softmax values for each sets of scores in x."""
@@ -192,7 +194,7 @@ else:
         #ax.grid(which="minor", axis='x', color='#DAD8D7', alpha=0.1, zorder=1)
         ax.grid(which="major", axis='y', color='#DAD8D7', alpha=0.3, zorder=1)
         ax.grid(which="minor", axis='y', color='#DAD8D7', alpha=0.1, zorder=1)
-        plt.bar(np.arange(0,len(d2)*2,2)-0.4,percentage(list(d2.values())),0.8,align='center',label=label2,color='lightseagreen')
+        plt.bar(np.arange(0,len(d2)*2,2)-0.4,percentage(list(d2.values())),0.8,align='center',label=label2,color='C0')
         plt.bar(np.arange(0,len(d1)*2,2)+0.4,percentage(list(d1.values())),0.8,align='center',label=label1,color='coral')
 
         ax.spines['top'].set_visible(False)
@@ -203,8 +205,10 @@ else:
         plt.xticks(np.arange(0,len(d1)*2,2), list(d1.keys()),rotation=45,ha='right', rotation_mode='anchor')
         plt.yscale("log")
         plt.tight_layout()
-        plt.legend(bbox_to_anchor=(0.23, 1.05),framealpha=1)
-        plt.savefig("{}_dist.png".format(FLAGS.output_name))
+
+        legend = plt.legend(bbox_to_anchor=(0.23, 1.05),framealpha=1)
+
+        plt.savefig("{}_dist.png".format(FLAGS.output_name),dpi=600)
         plt.savefig("{}_dist.eps".format(FLAGS.output_name),format='eps')
         print("{}_dist.png".format(FLAGS.output_name))
 
