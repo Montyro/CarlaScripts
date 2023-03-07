@@ -236,9 +236,11 @@ def main(config):
 
         # Now we need to give an initial transform to the vehicle. We choose a
         # random transform from the list of recommended spawn points of the map.
-        camera_spawn = 12
+        camera_spawn = 10
         start_pose = world.get_map().get_spawn_points()[camera_spawn]
         waypoint = world.get_map().get_waypoint(start_pose.location)
+
+        camera_spawn = 20
 
 
         # So let's tell the world to spawn the vehicle.
@@ -298,7 +300,7 @@ def main(config):
 
 
         #blueprints = [blueprint_library.filter('kitti')]
-        spawn_points = world.get_map().get_spawn_points()[:camera_spawn] + world.get_map().get_spawn_points()[camera_spawn+1:]
+        spawn_points = world.get_map().get_spawn_points()[:camera_spawn] + world.get_map().get_spawn_points()[camera_spawn:]
 
         SpawnActor = carla.command.SpawnActor
         SetAutopilot = carla.command.SetAutopilot
@@ -396,12 +398,28 @@ def main(config):
         image_size_y = 1080
         camera_transform = carla.Transform(carla.Location(x=1.5, z=1.63))#, carla.Rotation(pitch=-15))
 
-       ### LiDAR ###
+        #### RGB Cameras ####
+        # RGB Camera 1
+        # Find blueprint
+        camera_bp = blueprint_library.find('sensor.camera.rgb')
+        #Configure camera parameters
+        camera_bp.set_attribute('fov',str(120)) #In cm
+        camera_bp.set_attribute('image_size_x',str(image_size_x))
+        camera_bp.set_attribute('image_size_y',str(image_size_y))
+
+        #Spawn the camera sensor
+        camera_rgb_1 = world.spawn_actor(
+            camera_bp,
+            camera_transform,
+            attach_to=vehicle)
+        sensor_list.append(camera_rgb_1)
+
+        ### LiDAR ###
 
         # Let's add now a "depth" camera attached to the vehicle. Note that the
         # transform we give here is now relative to the vehicle.
         semantic_s_bp = blueprint_library.find('sensor.lidar.ray_cast_semantic')
-        semantic_s_bp.set_attribute('upper_fov',str(3))
+        semantic_s_bp.set_attribute('upper_fov',str(2))
         semantic_s_bp.set_attribute('lower_fov',str(-25))
         semantic_s_bp.set_attribute('range', '80.0')
         semantic_s_bp.set_attribute('channels', '64')
@@ -410,7 +428,7 @@ def main(config):
         semantic_s = world.spawn_actor(semantic_s_bp,  carla.Transform(carla.Location(z=1.63)), attach_to=actor_list[0])
         sensor_list.append(semantic_s)
 
-        dataset_path = 'D:/semlidar/dataset/sequences/65/'
+        dataset_path = 'D:/semlidar/dataset/sequences/70/'
 
         first_frame = True
         with open(dataset_path+"poses.txt", 'w') as posfile:
@@ -421,7 +439,7 @@ def main(config):
         ##############################################################################################
         # Create a synchronous mode context.
         ##############################################################################################
-        with CarlaSyncMode(world, semantic_s, fps=10) as sync_mode:
+        with CarlaSyncMode(world, semantic_s,camera_rgb_1, fps=10) as sync_mode:
             counter = 0
             while True:
                 if should_quit():
@@ -430,7 +448,7 @@ def main(config):
 
                 
                 # Advance the simulation and wait for the data.
-                snapshot, semantic_scan = sync_mode.tick(timeout=10.0) #Ajusta timeout si el pc es muy lento
+                snapshot, semantic_scan,rgb_1 = sync_mode.tick(timeout=10.0) #Ajusta timeout si el pc es muy lento
                 if first_frame:
                     #initial_camera_position = vehicle.get_location() + camera_transform.location
                     initial_camera_rotation = vehicle.get_transform().rotation
@@ -452,6 +470,7 @@ def main(config):
                 # Save the scans
                 counter+=1
                 semantic_scan.save_to_disk(dataset_path+'/scan/%06d.ply' % semantic_scan.frame) # Save the scan
+                rgb_1.save_to_disk(dataset_path+('cam1/{}.png').format(rgb_1.frame)) # Save the scan
 
                 
                 #Save poses

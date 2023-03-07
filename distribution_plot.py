@@ -6,10 +6,10 @@ import seaborn as sns
 #sns.set()
 #plt.style.use("default")
 #Aux functions
-def percentage(x):
+def percentage(x,total_points):
     """Compute softmax values for each sets of scores in x."""
     x= np.array(x,dtype=np.int64)
-    dist = np.round(x*100 / x.sum(),3)
+    dist = np.round(x/(1000*total_points),3)#  x.sum(),3)
     return dist
 
 #argparse
@@ -67,7 +67,7 @@ if FLAGS.load_file_compare_with2 != None:
 conflictive_labels = ['person','car','motorcyclist','bicyclist','bus','other-vehicle','truck']
 
 total_counts = data['counts']
-
+d1_total_points = np.sum(np.array(list(total_counts.values()))/100000)
 flagged_file = False
 for label in conflictive_labels:
     if 'moving-{}'.format(label) in list(total_counts.keys()):
@@ -100,7 +100,8 @@ d1 = total_counts
 
 if FLAGS.load_file_compare_with != None:
     total_counts = data2['counts']
-
+    d2_total_points = np.sum(np.array(list(total_counts.values()))/100000)
+    print(d2_total_points)
     flagged_file = False
     for label in conflictive_labels:
         if 'moving-{}'.format(label) in list(total_counts.keys()):
@@ -194,8 +195,13 @@ else:
         #ax.grid(which="minor", axis='x', color='#DAD8D7', alpha=0.1, zorder=1)
         ax.grid(which="major", axis='y', color='#DAD8D7', alpha=0.3, zorder=1)
         ax.grid(which="minor", axis='y', color='#DAD8D7', alpha=0.1, zorder=1)
-        plt.bar(np.arange(0,len(d2)*2,2)-0.4,percentage(list(d2.values())),0.8,align='center',label=label2,color='C0')
-        plt.bar(np.arange(0,len(d1)*2,2)+0.4,percentage(list(d1.values())),0.8,align='center',label=label1,color='coral')
+
+        plt.plot(np.arange(-1.2,len(d2)*2,2),[np.sum(percentage(list(d2.values()),d2_total_points)/19) for a in np.arange(-1.2,len(d2)*2,2)],color='C0',zorder=5,alpha=0.7,label="Mean SemanticK")
+        plt.plot(np.arange(-1.2,len(d2)*2,2),[np.sum(percentage(list(d1.values()),d1_total_points)/19) for a in np.arange(-1.2,len(d2)*2,2)],color='coral',linestyle='--',zorder=5,alpha=0.7,label="Mean SyhntmanticL")
+
+        plt.bar(np.arange(0,len(d2)*2,2)-0.4,percentage(list(d2.values()),d2_total_points),0.8,align='center',label=label2,color='C0',zorder=10)
+        plt.bar(np.arange(0,len(d1)*2,2)+0.4,percentage(list(d1.values()),d1_total_points),0.8,align='center',label=label1,color='coral',zorder=10)
+        
 
         ax.spines['top'].set_visible(False)
         ax.spines['right'].set_visible(False)
@@ -204,9 +210,15 @@ else:
         
         plt.xticks(np.arange(0,len(d1)*2,2), list(d1.keys()),rotation=45,ha='right', rotation_mode='anchor')
         plt.yscale("log")
-        plt.tight_layout()
 
-        legend = plt.legend(bbox_to_anchor=(0.23, 1.05),framealpha=1)
+        handles, labels = plt.gca().get_legend_handles_labels()
+        order = [2,3,0,1]
+        legend = ax.legend([handles[idx] for idx in order],[labels[idx] for idx in order],bbox_to_anchor=(0, 1.02, 1, 0.2),
+                            loc="lower left",mode="expand",prop={'size': 8},
+                            ncol=4) #bbox_to_anchor=(0.23, 1.05),framealpha=1)
+
+
+        plt.tight_layout()
 
         plt.savefig("{}_dist.png".format(FLAGS.output_name),dpi=600)
         plt.savefig("{}_dist.eps".format(FLAGS.output_name),format='eps')
@@ -242,6 +254,5 @@ else:
 
 
 
-f = dict(zip(d1.keys(),percentage(list(d1.values()))))
 
 

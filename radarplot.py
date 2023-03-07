@@ -98,20 +98,58 @@ def radar_factory(num_vars, frame='circle'):
     register_projection(RadarAxes)
     return theta
 
-theta = radar_factory(19, frame='polygon')
+theta = radar_factory(19, frame='circle')
 fig, ax = plt.subplots(figsize=(9, 9), nrows=1, ncols=1,
                         subplot_kw=dict(projection='radar'))
-ax.set_varlabels(['car ','bicycle ','motorcycle ','truck ','bus ','person ','bicyclist ','motorcyclist ','road ','parking ','sidewalk ','other-ground ','building ','fence ','vegetation ','trunk ','terrain ','pole ','traffic-sign'])
+ax.set_varlabels(['car ','bicycle ','motorcycle ','truck ','other-vehicle','person ','bicyclist ','motorcyclist ','road','parking ','sidewalk ','other-ground ','building ','fence ','vegetation ','trunk ','terrain ','pole ','traffic-sign'])
 
-baseline = [95.7,47.7,49.5,47.2,48.3,64.1,66.7,48.2,88.5,57.7,70.7,23.2,90.1,63.9,84.5,67.7,69.0,53.1,62.1]
-baseline2= [95.7,45.6,44.5,48.0,47.6,62.6,68.6,59.1,88.8,58.3,71.1,26.8,90.3,64.7,84.2,66.6,68.1,53.2,62.4]
+#baseline = [95.7,47.7,49.5,47.2,48.3,64.1,66.7,48.2,88.5,57.7,70.7,23.2,90.1,63.9,84.5,67.7,69.0,53.1,62.1,63.0]
+#baseline2= [95.7,45.6,44.5,48.0,47.6,62.6,68.6,59.1,88.8,58.3,71.1,26.8,90.3,64.7,84.2,66.6,68.1,53.2,62.4,63.5]
+#baseline = [95.7,47.7,49.5,47.2,48.3,64.1,66.7,48.2,88.5,58.4]
+#baseline2= [95.7,45.6,44.5,48.0,47.6,62.6,68.6,59.1,88.8,59.0]
+
+baseline = [100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100]
+lt= [100,95.6,89.9,101.7,98.6,97.7,102.8,122.6,100.3,101.2,100.6,115.5,100.2,101.3,99.6,98.4,98.7,100.2,100.5]
+full = [100.1,100.0,95.4,102.5,101.4,98.6,104.5,101.7,100.5,101.4,101.0,103.4,99.8,99.5,99.9,99.3,99.6,101.7,100.8]
 
 ax.set_rlabel_position(theta[0] * 180/np.pi)
 ax.get_yaxis().set_tick_params(labelsize=8)
 ax.get_xaxis().set_tick_params(pad=20)
 
-ax.plot(theta,baseline , color='C0',label='baseline')
+ax.set_ylim(70,125)
+
+ax.plot(theta,baseline , color='C0',label='Baseline')
 ax.fill(theta,baseline , facecolor='C0', alpha=0.1, label='_nolegend_')
-ax.plot(theta,baseline2 , color='coral',label='pre-trained')
-ax.fill(theta,baseline2 , facecolor='coral', alpha=0.1, label='_nolegend_')
+ax.plot(theta,lt , color='C1',label='Lite')
+ax.fill(theta,lt , facecolor='C1', alpha=0.05, label='_nolegend_')
+ax.plot(theta,full , color='C2',label='Full')
+ax.fill(theta,full , facecolor='C2', alpha=0.05, label='_nolegend_')
+plt.legend(loc='upper right', bbox_to_anchor=(1.1, 1.1), fancybox=True, shadow=True)
+plt.show()
+
+
+theta = radar_factory(18, frame='circle')
+fig, ax = plt.subplots(figsize=(9, 9), nrows=1, ncols=1,
+                        subplot_kw=dict(projection='radar'))
+ax.set_varlabels(['car ','bicycle ','motorcycle ','other-vehicle','person ','bicyclist ','motorcyclist ','road','parking ','sidewalk ','other-ground ','building ','fence ','vegetation ','trunk ','terrain ','pole ','traffic-sign'])
+
+
+baseline = [100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100]
+lt= [103.7,129.4,105.9,128.6,104.4,97.9,145.9,99.0,98.9,100.3,90.9,101.8,104.4,100.7,95.2,104.5,104.6,110.5]
+full = [103.4,142.5,113.8,117.3,112.4,100.9,66.7,99.2,97.0,100.7,99.5,100.8,103.0,101.3,101.8,103.3,102.3,115.4]
+
+
+ax.set_rlabel_position(theta[0] * 180/np.pi)
+ax.get_yaxis().set_tick_params(labelsize=8)
+ax.get_xaxis().set_tick_params(pad=20)
+
+ax.set_ylim(55,150)
+
+ax.plot(theta,baseline , color='C0',label='Baseline')
+ax.fill(theta,baseline , facecolor='C0', alpha=0.1, label='_nolegend_')
+ax.plot(theta,lt , color='C1',label='Lite')
+ax.fill(theta,lt , facecolor='C1', alpha=0.05, label='_nolegend_')
+ax.plot(theta,full , color='C2',label='Full')
+ax.fill(theta,full , facecolor='C2', alpha=0.05, label='_nolegend_')
+plt.legend(loc='upper right', bbox_to_anchor=(1.1, 1.1), fancybox=True, shadow=True)
 plt.show()
