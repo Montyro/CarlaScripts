@@ -234,7 +234,7 @@ def main(config):
 
         # Now we need to give an initial transform to the vehicle. We choose a
         # random transform from the list of recommended spawn points of the map.
-        camera_spawn = 12
+        camera_spawn = np.random.choice(np.arange(len(world.get_map().get_spawn_points())))
         start_pose = world.get_map().get_spawn_points()[camera_spawn]
         waypoint = world.get_map().get_waypoint(start_pose.location)
 
@@ -381,6 +381,20 @@ def main(config):
         traffic_manager.global_percentage_speed_difference(40.0)
 
 
+        #####################################
+        # Traffic lights
+        #####################################
+
+        list_actor = world.get_actors()
+        for actor_ in list_actor:
+            if isinstance(actor_, carla.TrafficLight):
+                # for any light, first set the light state, then set time. for yellow it is 
+                # carla.TrafficLightState.Yellow and Red it is carla.TrafficLightState.Red
+                actor_.set_state(carla.TrafficLightState.Green) 
+                actor_.set_green_time(1000.0)
+                # actor_.set_green_time(5000.0)
+                # actor_.set_yellow_time(1000.0)
+
         ####################################################################################
         # Sensor initialization
         ####################################################################################
@@ -471,7 +485,7 @@ def main(config):
         # Find blueprint
         depth_camera_bp_2 = blueprint_library.find('sensor.camera.depth')
         #Configure camera parameters
-        depth_camera_bp_2.set_attribute('fov',str(40)) #In cm
+        depth_camera_bp_2.set_attribute('fov',str(60)) #In cm
         depth_camera_bp_2.set_attribute('image_size_x',str(image_size_x))
         depth_camera_bp_2.set_attribute('image_size_y',str(image_size_y))
         
@@ -579,11 +593,11 @@ def main(config):
                 rgb_4.save_to_disk(dataset_path+('cam4/{}.png').format(rgb_4.frame)) # Save the scan
                 rgb_5.save_to_disk(dataset_path+('cam5/{}.png').format(rgb_5.frame)) # Save the scan
 
-                depth_1.save_to_disk(dataset_path+('d_cam1/{}.png').format(depth_1.frame),cc) # Save the scan
+                depth_1.save_to_disk(dataset_path+('d_cam1/{}.png').format(depth_1.frame),cc2) # Save the scan
                 depth_2.save_to_disk(dataset_path+('d_cam2/{}.png').format(depth_2.frame),cc2) # Save the scan
-                depth_3.save_to_disk(dataset_path+('d_cam3/{}.png').format(depth_3.frame),cc) # Save the scan
-                depth_4.save_to_disk(dataset_path+('d_cam4/{}.png').format(depth_4.frame),cc) # Save the scan
-                depth_5.save_to_disk(dataset_path+('d_cam5/{}.png').format(depth_5.frame),cc) # Save the scan
+                depth_3.save_to_disk(dataset_path+('d_cam3/{}.png').format(depth_3.frame),cc2) # Save the scan
+                depth_4.save_to_disk(dataset_path+('d_cam4/{}.png').format(depth_4.frame),cc2) # Save the scan
+                depth_5.save_to_disk(dataset_path+('d_cam5/{}.png').format(depth_5.frame),cc2) # Save the scan
                 #image_rgb_4.save_to_disk('_out_rgb4/{}.png' % image_rgb_4.frame) # Save the scan
                 #image_rgb_5.save_to_disk('_out_rgb5/{}.png' % image_rgb_5.frame) # Save the scan
 
@@ -622,7 +636,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='CARLA Visual Odometry Dataset Generator')
     parser.add_argument('--config_file','-c', help='Config file',required=True)
-    parser.add_argument('--output_folder','-o', help='Output folder',required=True)
+    parser.add_argument('--output_folder','-o', help='Output folder',required=False)
     
     args = parser.parse_args()
 
