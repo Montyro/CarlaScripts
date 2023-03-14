@@ -118,15 +118,45 @@ ax.get_xaxis().set_tick_params(pad=20)
 
 ax.set_ylim(70,125)
 
-ax.plot(theta,baseline , color='C0',label='Baseline')
+ax.plot(theta,baseline , color='C0',label='SPVCNN')
 ax.fill(theta,baseline , facecolor='C0', alpha=0.1, label='_nolegend_')
-ax.plot(theta,lt , color='C1',label='Lite')
-ax.fill(theta,lt , facecolor='C1', alpha=0.05, label='_nolegend_')
-ax.plot(theta,full , color='C2',label='Full')
+ax.plot(theta,full , color='C2',label='SPVCNN-F',linestyle='-.')
 ax.fill(theta,full , facecolor='C2', alpha=0.05, label='_nolegend_')
-plt.legend(loc='upper right', bbox_to_anchor=(1.1, 1.1), fancybox=True, shadow=True)
-plt.show()
+ax.plot(theta,lt , color='C1',label='SPVCNN-LT',linestyle='--')
+ax.fill(theta,lt , facecolor='C1', alpha=0.05, label='_nolegend_')
 
+plt.legend(loc='upper right', bbox_to_anchor=(1.1, 1.1), fancybox=True, shadow=True)
+plt.savefig("radarplot_spvcnn.png", dpi=600, bbox_inches='tight')
+
+
+
+
+theta = radar_factory(19, frame='circle')
+fig, ax = plt.subplots(figsize=(9, 9), nrows=1, ncols=1,
+                        subplot_kw=dict(projection='radar'))
+ax.set_varlabels(['car ','bicycle ','motorcycle ','truck','other-vehicle','person ','bicyclist ','motorcyclist ','road','parking ','sidewalk ','other-ground ','building ','fence ','vegetation ','trunk ','terrain ','pole ','traffic-sign'])
+
+
+baseline = [100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100]
+lt= [103.7,129.4,105.9,166.6,128.6,104.4,97.9,145.9,99.0,98.9,100.3,90.9,101.8,104.4,100.7,95.2,104.5,104.6,110.5]
+full = [103.4,142.5,113.8,113.5,117.3,112.4,100.9,66.7,99.2,97.0,100.7,99.5,100.8,103.0,101.3,101.8,103.3,102.3,115.4]
+
+
+ax.set_rlabel_position(theta[0] * 180/np.pi)
+ax.get_yaxis().set_tick_params(labelsize=8)
+ax.get_xaxis().set_tick_params(pad=20)
+
+ax.set_ylim(60,170)
+
+ax.plot(theta,baseline , color='C0',label='SSV3')
+ax.fill(theta,baseline , facecolor='C0', alpha=0.1, label='_nolegend_')
+ax.plot(theta,full , color='C2',label='SSV3-F',linestyle='-.')
+ax.fill(theta,full , facecolor='C2', alpha=0.05, label='_nolegend_')
+ax.plot(theta,lt , color='C1',label='SSV3-LT',linestyle='--')
+ax.fill(theta,lt , facecolor='C1', alpha=0.05, label='_nolegend_')
+
+plt.legend(loc='upper right', bbox_to_anchor=(1.1, 1.1), fancybox=True, shadow=True)
+plt.savefig("radarplot_ssqv3.png", dpi=600, bbox_inches='tight')
 
 theta = radar_factory(18, frame='circle')
 fig, ax = plt.subplots(figsize=(9, 9), nrows=1, ncols=1,
@@ -143,13 +173,15 @@ ax.set_rlabel_position(theta[0] * 180/np.pi)
 ax.get_yaxis().set_tick_params(labelsize=8)
 ax.get_xaxis().set_tick_params(pad=20)
 
-ax.set_ylim(55,150)
+ax.set_ylim(60,150)
 
-ax.plot(theta,baseline , color='C0',label='Baseline')
+ax.plot(theta,baseline , color='C0',label='SSV3')
 ax.fill(theta,baseline , facecolor='C0', alpha=0.1, label='_nolegend_')
-ax.plot(theta,lt , color='C1',label='Lite')
-ax.fill(theta,lt , facecolor='C1', alpha=0.05, label='_nolegend_')
-ax.plot(theta,full , color='C2',label='Full')
+ax.plot(theta,full , color='C2',label='SSV3-F',linestyle='-.')
 ax.fill(theta,full , facecolor='C2', alpha=0.05, label='_nolegend_')
+ax.plot(theta,lt , color='C1',label='SSV3-LT',linestyle='--')
+ax.fill(theta,lt , facecolor='C1', alpha=0.05, label='_nolegend_')
+
 plt.legend(loc='upper right', bbox_to_anchor=(1.1, 1.1), fancybox=True, shadow=True)
-plt.show()
+plt.savefig("radarplot_ssqv3_notrcuk.png", dpi=600, bbox_inches='tight')
+
