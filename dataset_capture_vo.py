@@ -378,7 +378,7 @@ def main(config):
                 actor_controllers.append(npc)
                 print('created %s' % npc.type_id)
 
-        traffic_manager.global_percentage_speed_difference(40.0)
+        traffic_manager.global_percentage_speed_difference(80.0)
 
 
         #####################################
@@ -391,7 +391,9 @@ def main(config):
                 # for any light, first set the light state, then set time. for yellow it is 
                 # carla.TrafficLightState.Yellow and Red it is carla.TrafficLightState.Red
                 actor_.set_state(carla.TrafficLightState.Green) 
-                actor_.set_green_time(1000.0)
+                actor_.set_green_time(60.0)
+                actor_.set_state(carla.TrafficLightState.Red) 
+                actor_.set_green_time(5.0)
                 # actor_.set_green_time(5000.0)
                 # actor_.set_yellow_time(1000.0)
 
