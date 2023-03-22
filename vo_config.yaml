@@ -2,10 +2,10 @@ sampling_steps: 2000
 
 seed: 11333
 
-map: "Town04_Opt"
+map: "Town01_Opt"
 
 vehicle_amounts:
-  - cars : 30
-  - motorbikes : 30
-  - bikes : 30
-  - trucks: 30
+  - cars : 10
+  - motorbikes : 10
+  - bikes : 10
+  - trucks: 6

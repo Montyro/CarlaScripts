@@ -172,7 +172,7 @@ def main(config):
         # to the simulator. Here we'll assume the simulator is accepting
         # requests in the localhost at port 2000.
         client = carla.Client('localhost', 2000)
-        client.set_timeout(60.0)
+        client.set_timeout(10.0)
 
 
         pygame.init() # To be able to exit
@@ -181,11 +181,19 @@ def main(config):
         clock = pygame.time.Clock()
         # Once we have a client we can retrieve the world that is currently
         # running.
-        print(client.get_available_maps())
+        #print(client.get_available_maps())
 
-        #world = client.load_world("/Game/Carla/Maps/"+config['map'])
         world = client.get_world()
-        #exit()
+        
+        print("Current map: {}".format(world.get_map().name.split('/')[-1]))
+        if(world.get_map().name.split('/')[-1] != config['map']):
+            client.set_timeout(120.0)
+            print("Loading a new map: {}".format(config['map']))
+            world = client.load_world("/Game/Carla/Maps/"+config['map'])
+            client.set_timeout(10.0)
+
+
+
         
         #############################################################################
         # Set up synchronous mode
@@ -378,7 +386,7 @@ def main(config):
                 actor_controllers.append(npc)
                 print('created %s' % npc.type_id)
 
-        traffic_manager.global_percentage_speed_difference(80.0)
+        traffic_manager.global_percentage_speed_difference(10.0)
 
 
         #####################################
@@ -391,9 +399,8 @@ def main(config):
                 # for any light, first set the light state, then set time. for yellow it is 
                 # carla.TrafficLightState.Yellow and Red it is carla.TrafficLightState.Red
                 actor_.set_state(carla.TrafficLightState.Green) 
-                actor_.set_green_time(60.0)
-                actor_.set_state(carla.TrafficLightState.Red) 
-                actor_.set_green_time(5.0)
+                actor_.set_green_time(100.0)
+
                 # actor_.set_green_time(5000.0)
                 # actor_.set_yellow_time(1000.0)
 
@@ -544,7 +551,7 @@ def main(config):
         sensor_list.append(depth_camera_5)
 
 
-        dataset_path = 'D:/dataset_odometry/dataset/sequences/00/'
+        dataset_path = 'D:/dataset_odometry/dataset/sequences/03/'
 
         first_frame = True
         with open(dataset_path+"poses.txt", 'w') as posfile:
@@ -595,11 +602,11 @@ def main(config):
                 rgb_4.save_to_disk(dataset_path+('cam4/{}.png').format(rgb_4.frame)) # Save the scan
                 rgb_5.save_to_disk(dataset_path+('cam5/{}.png').format(rgb_5.frame)) # Save the scan
 
-                depth_1.save_to_disk(dataset_path+('d_cam1/{}.png').format(depth_1.frame),cc2) # Save the scan
-                depth_2.save_to_disk(dataset_path+('d_cam2/{}.png').format(depth_2.frame),cc2) # Save the scan
-                depth_3.save_to_disk(dataset_path+('d_cam3/{}.png').format(depth_3.frame),cc2) # Save the scan
-                depth_4.save_to_disk(dataset_path+('d_cam4/{}.png').format(depth_4.frame),cc2) # Save the scan
-                depth_5.save_to_disk(dataset_path+('d_cam5/{}.png').format(depth_5.frame),cc2) # Save the scan
+                depth_1.save_to_disk(dataset_path+('d_cam1/{}.png').format(depth_1.frame)) # Save the scan
+                depth_2.save_to_disk(dataset_path+('d_cam2/{}.png').format(depth_2.frame)) # Save the scan
+                depth_3.save_to_disk(dataset_path+('d_cam3/{}.png').format(depth_3.frame)) # Save the scan
+                depth_4.save_to_disk(dataset_path+('d_cam4/{}.png').format(depth_4.frame)) # Save the scan
+                depth_5.save_to_disk(dataset_path+('d_cam5/{}.png').format(depth_5.frame)) # Save the scan
                 #image_rgb_4.save_to_disk('_out_rgb4/{}.png' % image_rgb_4.frame) # Save the scan
                 #image_rgb_5.save_to_disk('_out_rgb5/{}.png' % image_rgb_5.frame) # Save the scan
 
