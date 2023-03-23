@@ -551,7 +551,7 @@ def main(config):
         sensor_list.append(depth_camera_5)
 
 
-        dataset_path = 'D:/dataset_odometry/dataset/sequences/03/'
+        dataset_path = 'D:/dataset_odometry/dataset/sequences/01/'
 
         first_frame = True
         with open(dataset_path+"poses.txt", 'w') as posfile:
