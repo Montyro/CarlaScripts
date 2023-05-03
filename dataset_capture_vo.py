@@ -551,7 +551,7 @@ def main(config):
         sensor_list.append(depth_camera_5)
 
 
-        dataset_path = 'D:/dataset_odometry/dataset/sequences/01/'
+        dataset_path = 'D:/odometry/seq05/'
 
         first_frame = True
         with open(dataset_path+"poses.txt", 'w') as posfile:
@@ -596,17 +596,17 @@ def main(config):
                 cc = carla.ColorConverter.Depth
                 cc2 = carla.ColorConverter.LogarithmicDepth
 
-                rgb_1.save_to_disk(dataset_path+('cam1/{}.png').format(rgb_1.frame)) # Save the scan
-                rgb_2.save_to_disk(dataset_path+('cam2/{}.png').format(rgb_2.frame)) # Save the scan
-                rgb_3.save_to_disk(dataset_path+('cam3/{}.png').format(rgb_3.frame)) # Save the scan
-                rgb_4.save_to_disk(dataset_path+('cam4/{}.png').format(rgb_4.frame)) # Save the scan
-                rgb_5.save_to_disk(dataset_path+('cam5/{}.png').format(rgb_5.frame)) # Save the scan
+                rgb_1.save_to_disk(dataset_path+('cam1/rgb/{}.png').format(rgb_1.frame)) # Save the scan
+                rgb_2.save_to_disk(dataset_path+('cam2/rgb/{}.png').format(rgb_2.frame)) # Save the scan
+                rgb_3.save_to_disk(dataset_path+('cam3/rgb/{}.png').format(rgb_3.frame)) # Save the scan
+                rgb_4.save_to_disk(dataset_path+('cam4/rgb/{}.png').format(rgb_4.frame)) # Save the scan
+                rgb_5.save_to_disk(dataset_path+('cam5/rgb/{}.png').format(rgb_5.frame)) # Save the scan
 
-                depth_1.save_to_disk(dataset_path+('d_cam1/{}.png').format(depth_1.frame)) # Save the scan
-                depth_2.save_to_disk(dataset_path+('d_cam2/{}.png').format(depth_2.frame)) # Save the scan
-                depth_3.save_to_disk(dataset_path+('d_cam3/{}.png').format(depth_3.frame)) # Save the scan
-                depth_4.save_to_disk(dataset_path+('d_cam4/{}.png').format(depth_4.frame)) # Save the scan
-                depth_5.save_to_disk(dataset_path+('d_cam5/{}.png').format(depth_5.frame)) # Save the scan
+                depth_1.save_to_disk(dataset_path+('cam1/depth/{}.png').format(depth_1.frame)) # Save the scan
+                depth_2.save_to_disk(dataset_path+('cam2/depth/{}.png').format(depth_2.frame)) # Save the scan
+                depth_3.save_to_disk(dataset_path+('cam3/depth/{}.png').format(depth_3.frame)) # Save the scan
+                depth_4.save_to_disk(dataset_path+('cam4/depth/{}.png').format(depth_4.frame)) # Save the scan
+                depth_5.save_to_disk(dataset_path+('cam5/depth/{}.png').format(depth_5.frame)) # Save the scan
                 #image_rgb_4.save_to_disk('_out_rgb4/{}.png' % image_rgb_4.frame) # Save the scan
                 #image_rgb_5.save_to_disk('_out_rgb5/{}.png' % image_rgb_5.frame) # Save the scan
 
