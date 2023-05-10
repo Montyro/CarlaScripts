@@ -41,7 +41,7 @@ def match_kitti_labels(np_labels):
                     'Bikedriver':30
                     }
     
-    equivalences = {0:72,
+    equivalences = {0:0,
                     1:50,
                     2:51,
                     3:1,

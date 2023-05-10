@@ -1,0 +1,16 @@
+sampling_steps: 150
+
+seed: 1
+
+##Per map seeds
+#Towh10hd opt 242424
+#Town01 1
+#Toen02 2
+
+
+map: "Town01_Opt"
+vehicle_amounts:
+  - cars : 10
+  - motorbikes : 10
+  - bikes : 10
+  - trucks: 6
