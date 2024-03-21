@@ -1,6 +1,6 @@
-sampling_steps: 150
+sampling_steps: 20
 
-seed: 1
+seed: 4499012
 
 ##Per map seeds
 #Towh10hd opt 242424
@@ -10,7 +10,7 @@ seed: 1
 
 map: "Town01_Opt"
 vehicle_amounts:
-  - cars : 10
+  - cars : 12
   - motorbikes : 10
   - bikes : 10
-  - trucks: 6
+  - trucks: 4

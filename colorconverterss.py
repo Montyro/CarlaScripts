@@ -30,14 +30,11 @@ labels = {
     24:18,
     25:15,
     26:17,
-    27:18,
-    28:17,
-    29:11,
-    30:11
+    27:17,
+    28:12,
+    29:12,
+    30:12
 }
-
-
-    
 
 def CarlaToCSLabels(img):
     red = img[:,:,0]
@@ -75,7 +72,7 @@ def LabelToRGB(img):
 
 
 
-img = Image.open(r'D:\odometry\seq05\cam1\ss\74.png')
+img = Image.open(r'D:\odometry\seq05\camdataset\cam1\ss\75114.png')
 img = np.array(img)
 a = CarlaToCSLabels(img)
 

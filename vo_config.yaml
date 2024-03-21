@@ -1,8 +1,8 @@
-sampling_steps: 1200
+sampling_steps: 40
 
 seed: 242424
 
-map: "Town10HD_Opt"
+map: "Town6HD_Opt"
 vehicle_amounts:
   - cars : 10
   - motorbikes : 10
