@@ -26,12 +26,12 @@ import yaml
 
 ########################### Change to the location of PythonAPI in your computer ####################
 try:
-    sys.path.append(glob.glob('D:/carla_project/carla/PythonAPI/carla/dist/carla-*%d.%d-%s.egg' % (
+    sys.path.append(glob.glob('E:\carla-*%d.%d-%s.egg' % (
         sys.version_info.major,
         sys.version_info.minor,
         'win-amd64' if os.name == 'nt' else 'linux-x86_64'))[0])
 except IndexError:
-    pass
+    print(IndexError)
 
 import carla
 
@@ -66,6 +66,9 @@ class Sun(object):
         elif preset_no == 2:
             self.azimuth= 278.7
             self.altitude = -1.3
+        elif preset_no == 3:
+            self.azimuth = 93
+            self.altitude= 8.5
 
     def __str__(self):
         return 'Sun(alt: %.2f, azm: %.2f)' % (self.altitude, self.azimuth)
@@ -98,14 +101,27 @@ class Storm(object):
             self._increasing = False
 
     def presets(self,preset_no):
-        if preset_no == 4:
+        if preset_no == 3:
             self.clouds = 80.0
             self.rain= 60.0
+            self._t = 60.0
+            self.puddles = 50.0
+            self.wetness = 10.0
+            self.wind = 90.0
+            self.fog = 30.0
+        else:
+            self.clouds = 0.0
+            self.rain = 0.0
+            self.puddles = 0
+            self._t = -249
+            self.fog = 0.0
+            self.wetness = 0.0
+            self.wind = 0.0
+
         
 
     def __str__(self):
         return 'Storm(clouds=%d%%, rain=%d%%, wind=%d%%)' % (self.clouds, self.rain, self.wind)
-
 
 class Weather(object):
     def __init__(self, weather):
@@ -114,6 +130,7 @@ class Weather(object):
         self._storm = Storm(weather.precipitation)
 
     def tick(self, delta_seconds):
+        print("Tick weather")
         self._sun.tick(delta_seconds)
         self._storm.tick(delta_seconds)
         self.weather.cloudiness = self._storm.clouds
@@ -130,10 +147,22 @@ class Weather(object):
             self._sun.presets(preset_no)
             self.weather.sun_azimuth_angle = self._sun.azimuth
             self.weather.sun_altitude_angle = self._sun.altitude
+            self.weather.precipitation = 0
+            self.weather.cloudiness = 0
+            self.weather.precipitation_deposit = 0
+            self.weather.wind_intensity = 0
+            self.weather.fog_density = 0
+            self.weather.wetness = 0
+
         else:
             self._storm.presets(preset_no)
             self.weather.precipitation = self._storm.rain
             self.weather.cloudiness = self._storm.clouds
+            self.weather.precipitation_deposit = self._storm.puddles
+            self.weather.wind_intensity = self._storm.wind
+            self.weather.fog_density = self._storm.fog
+            self.weather.wetness = self._storm.wetness
+
 
     def storm(self,preset_no):
         self._storm.presets(preset_no)
@@ -179,8 +208,9 @@ class CarlaSyncMode(object):
             make_queue(sensor.listen)
         return self
 
-    def tick(self, timeout):
+    def tick(self, timeout,weather):
         self.frame = self.world.tick()
+        weather.tick(0.1)
         data = [self._retrieve_data(q, timeout) for q in self._queues]
         assert all(x.frame == self.frame for x in data)
         return data
@@ -286,8 +316,7 @@ def main(config,cu_seed,frame_no,hour,human_waypoints,scans_cap):
         #clock = pygame.time.Clock()
         # Once we have a client we can retrieve the world that is currently
         # running.
-        #print(client.get_available_maps())
-
+        print(client.get_available_maps())
         world = client.get_world()
         
         print("Current map: {}".format(world.get_map().name.split('/')[-1]))
@@ -485,11 +514,12 @@ def main(config,cu_seed,frame_no,hour,human_waypoints,scans_cap):
                 actor_list.append(response.actor_id)
                 spawned_vehicles.append(response.actor_id)
 
-
+        ########################### People ########################################
+        
         used_spawn = []
         print("human wp",human_waypoints)
 
-        for i in range(0, 40):
+        for i in range(0, 60):
             #transform = world.get_map().get_spawn_points()[i+1+20]
 
             bp = random.choice(blueprint_library.filter('walker'))
@@ -514,6 +544,7 @@ def main(config,cu_seed,frame_no,hour,human_waypoints,scans_cap):
             trans.location = got_location
             trans.location.z+=1
             npc = world.try_spawn_actor(bp, trans)
+            
             world.tick()
 
             actor_controllers = []
@@ -552,8 +583,8 @@ def main(config,cu_seed,frame_no,hour,human_waypoints,scans_cap):
         ####################################################################################
         sensor_list = []
         #Common parameters
-        image_size_x = 1024
-        image_size_y = 512
+        image_size_x = 2048
+        image_size_y = 1024
 
        #### RGB Cameras ####
         # RGB Camera 1
@@ -639,7 +670,7 @@ def main(config,cu_seed,frame_no,hour,human_waypoints,scans_cap):
             ss_camera = world.get_actors().find(ss_camera_id)
             ss_cameras.append(ss_camera)
 
-        dataset_path = 'D:/test/'
+        dataset_path = 'E:/augmentedsyndata/dataset/'
 
         first_frame = True
         with open(dataset_path+"poses.txt", 'w') as posfile:
@@ -663,7 +694,7 @@ def main(config,cu_seed,frame_no,hour,human_waypoints,scans_cap):
                 
 
                 # Advance the simulation and wait for the data.
-                output = sync_mode.tick(timeout=50.0) #Ajusta timeout si el pc es muy lento
+                output = sync_mode.tick(timeout=50.0,weather=weather) #Ajusta timeout si el pc es muy lento
                 snapshot = output[0]
 
                 rgb_captures = output[1:1+len(spawned_vehicles)]
@@ -693,13 +724,12 @@ def main(config,cu_seed,frame_no,hour,human_waypoints,scans_cap):
                     #world.apply_settings(settings)
                     cc = carla.ColorConverter.Depth
                     cc2 = carla.ColorConverter.LogarithmicDepth
-
+                    
                     for i in np.arange(len(rgb_captures)):
-                        rgb_captures[i].save_to_disk(dataset_path+('cam1/rgb/{}_{}.png').format((step)*len(spawned_vehicles)-len(spawned_vehicles)+ i+frame_no*len(spawned_vehicles),hour)) # Save the scan
+                        rgb_captures[i].save_to_disk(dataset_path+('cam3/rgb/{}_{}.png').format((step)*len(spawned_vehicles)-len(spawned_vehicles)+ i+frame_no*len(spawned_vehicles),hour)) # Save the scan
 
                     for i in np.arange(len(ss_captures)):
-                        ss_captures[i].save_to_disk(dataset_path+('cam1/ss/{}_{}.png').format((step)*len(spawned_vehicles)-len(spawned_vehicles) + i +frame_no*len(spawned_vehicles),hour))
-
+                        ss_captures[i].save_to_disk(dataset_path+('cam3/ss/{}_{}.png').format((step)*len(spawned_vehicles)-len(spawned_vehicles) + i +frame_no*len(spawned_vehicles),hour))
 
                     if counter >= scans_cap:
                         return human_waypoints
@@ -749,8 +779,8 @@ if __name__ == '__main__':
     with(open(args.config_file)) as f:
         config = yaml.safe_load(f)
 
-    step = 64
-    its = 4
+    step = 65
+    its = 20
     human_wp = []
     seeds = np.random.randint(0,10000,its)
     print(seeds)
@@ -760,7 +790,8 @@ if __name__ == '__main__':
         human_wp = main(config,seed,step,0,human_wp,config['sampling_steps'])
         human_wp = main(config,seed,step,1,human_wp,config['sampling_steps'])
         human_wp = main(config,seed,step,2,human_wp,config['sampling_steps'])
-        human_wp = main(config,seed,step,4,human_wp,config['sampling_steps'])
+        human_wp = main(config,seed,step,3,human_wp,config['sampling_steps'])
+        #human_wp = main(config,seed,step,3,human_wp,config['sampling_steps'])
         step+=1
 
 

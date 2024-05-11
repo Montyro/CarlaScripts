@@ -1,6 +1,7 @@
 dataset/
 dataset/*
-
+carla/
+examples/
 *.json
 *.png
 

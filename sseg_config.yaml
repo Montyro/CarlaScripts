@@ -8,7 +8,7 @@ seed: 4499012
 #Toen02 2
 
 
-map: "Town01_Opt"
+map: "Town15"
 vehicle_amounts:
   - cars : 12
   - motorbikes : 10
