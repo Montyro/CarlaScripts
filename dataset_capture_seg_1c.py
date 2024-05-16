@@ -23,6 +23,7 @@ import numpy as np
 import math
 import argparse
 import yaml
+import re
 
 ########################### Change to the location of PythonAPI in your computer ####################
 try:
@@ -840,6 +841,9 @@ if __name__ == '__main__':
     human_wp = []
     seeds = [9,100]# np.arange(0,100,10000)
     seed = config['seed']
+
+    
+
     human_wp = main(config,seed,step,0,human_wp,10)
     human_wp = main(config,seed,step,0,human_wp,config['sampling_steps'])
     human_wp = main(config,seed,step,1,human_wp,config['sampling_steps'])

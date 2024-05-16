@@ -23,6 +23,7 @@ import numpy as np
 import math
 import argparse
 import yaml
+import re
 
 ########################### Change to the location of PythonAPI in your computer ####################
 try:
@@ -296,7 +297,7 @@ def translation_carla(location):
     else:
         return np.array([location.x, location.y, location.z])
 
-def main(config,cu_seed,frame_no,hour,human_waypoints,scans_cap):
+def main(config,cu_seed,hour,human_waypoints,scans_cap,save_flag=True):
     actor_list = []
     # In this tutorial script, we are going to add a vehicle to the simulation
     # and let it drive in autopilot. We will also create a camera attached to
@@ -307,7 +308,7 @@ def main(config,cu_seed,frame_no,hour,human_waypoints,scans_cap):
         # to the simulator. Here we'll assume the simulator is accepting
         # requests in the localhost at port 2000.
         client = carla.Client('localhost', 2000)
-        client.set_timeout(10.0)
+        client.set_timeout(120.0)
 
 
         #pygame.init() # To be able to exit
@@ -323,13 +324,17 @@ def main(config,cu_seed,frame_no,hour,human_waypoints,scans_cap):
         if(world.get_map().name.split('/')[-1] != config['map']):
             client.set_timeout(120.0)
             print("Loading a new map: {}".format(config['map']))
+
+            # if int(re.search(r'\d+',config['map']).group()) > 10:
+            #     world = client.load_world("/Game/Carla/Maps/"+config['map']+'/'+config['map'])
+            # else:
             world = client.load_world("/Game/Carla/Maps/"+config['map'])
-            client.set_timeout(10.0)
+            client.set_timeout(120.0)
 
         else:
             client.set_timeout(120.0)
             client.reload_world(True)
-            client.set_timeout(10.0)
+            client.set_timeout(120.0)
 
         world = client.get_world()
 
@@ -343,11 +348,11 @@ def main(config,cu_seed,frame_no,hour,human_waypoints,scans_cap):
 
         settings = world.get_settings()
         fps = 20
-        settings.fixed_delta_seconds = 0.05# (1.0 / fps) if fps > 0.0 else 0.0
-        settings.max_substep_delta_time=0.015
-        settings.max_substeps = 15
+        # settings.fixed_delta_seconds = 0.05# (1.0 / fps) if fps > 0.0 else 0.0
+        settings.fixed_delta_seconds = 0.05
+
+        # settings.max_substeps = 15
         settings.synchronous_mode = True
-        ready = False
         synchronous_master = True
         world.apply_settings(settings)
 
@@ -438,11 +443,11 @@ def main(config,cu_seed,frame_no,hour,human_waypoints,scans_cap):
             blueprints = [x for x in blueprints if int(x.get_attribute('number_of_wheels')) == 4]
             blueprints = [x for x in blueprints if not x.id.endswith('microlino')]
             #blueprints = [x for x in blueprints if not x.id.endswith('carlacola')]
-            blueprints = [x for x in blueprints if not x.id.endswith('cybertruck')]
+            #blueprints = [x for x in blueprints if not x.id.endswith('cybertruck')]
             blueprints = [x for x in blueprints if not x.id.endswith('t2')]
             blueprints = [x for x in blueprints if not x.id.endswith('sprinter')]
-            #blueprints = [x for x in blueprints if not x.id.endswith('firetruck')]
-            #blueprints = [x for x in blueprints if not x.id.endswith('ambulance')]
+            blueprints = [x for x in blueprints if not x.id.endswith('firetruck')]
+            blueprints = [x for x in blueprints if not x.id.endswith('ambulance')]
 
         blueprints = sorted(blueprints, key=lambda bp: bp.id)
         car_blueprints = blueprints
@@ -480,9 +485,10 @@ def main(config,cu_seed,frame_no,hour,human_waypoints,scans_cap):
         for n, transform in enumerate(spawn_points):
             if n >= number_of_vehicles:
                 break
-
+            ######################## RANDOM ############################
             veh_type = random.choice(list(vehicle_amounts.keys()))
             blueprint = random.choice(vehicle_amounts[veh_type][1])
+            ######################## RANDOM ############################
 
             vehicle_amounts[veh_type] = (vehicle_amounts[veh_type][0]-1,vehicle_amounts[veh_type][1])
 
@@ -491,10 +497,16 @@ def main(config,cu_seed,frame_no,hour,human_waypoints,scans_cap):
 
             #print(blueprint.id)
             if blueprint.has_attribute('color'):
+                ######################## RANDOM ############################
                 color = random.choice(blueprint.get_attribute('color').recommended_values)
+                ######################## RANDOM ############################
+
                 blueprint.set_attribute('color', color)
             if blueprint.has_attribute('driver_id'):
+                ######################## RANDOM ############################
                 driver_id = random.choice(blueprint.get_attribute('driver_id').recommended_values)
+                ######################## RANDOM ############################
+
                 blueprint.set_attribute('driver_id', driver_id)
             if hero:
                 blueprint.set_attribute('role_name', 'hero')
@@ -520,8 +532,7 @@ def main(config,cu_seed,frame_no,hour,human_waypoints,scans_cap):
         print("human wp",human_waypoints)
 
         for i in range(0, 60):
-            #transform = world.get_map().get_spawn_points()[i+1+20]
-
+            ######################## RANDOM ############################            
             bp = random.choice(blueprint_library.filter('walker'))
             controller = blueprint_library.find('controller.ai.walker')
             # This time we are using try_spawn_actor. If the spot is already
@@ -529,13 +540,15 @@ def main(config,cu_seed,frame_no,hour,human_waypoints,scans_cap):
             trans = carla.Transform()
 
             if human_waypoints == []:
-                print(human_waypoints)
+                ######################## RANDOM ############################
                 got_location = world.get_random_location_from_navigation()
                 while got_location in used_spawn:
+                    ######################## RANDOM ############################
                     got_location = world.get_random_location_from_navigation()
 
                 used_spawn.append(got_location)
             else:
+                ######################## RANDOM ############################
                 got_location = world.get_random_location_from_navigation()
 
                 got_location = human_waypoints[i]
@@ -594,6 +607,9 @@ def main(config,cu_seed,frame_no,hour,human_waypoints,scans_cap):
         camera_bp.set_attribute('fov',str(60)) #In cm
         camera_bp.set_attribute('image_size_x',str(image_size_x))
         camera_bp.set_attribute('image_size_y',str(image_size_y))
+        camera_bp.set_attribute('blur_amount',str(0.0))
+        camera_bp.set_attribute('motion_blur_intensity',str(0.0))
+
 
         #Spawn the camera sensors
         #Center
@@ -635,7 +651,7 @@ def main(config,cu_seed,frame_no,hour,human_waypoints,scans_cap):
         ss_camera_p = blueprint_library.find('sensor.camera.semantic_segmentation')
         #Configure camera parameters
         ss_camera_p.set_attribute('fov',str(60)) #In cm
-        ss_camera_p.set_attribute('image_size_x',str(image_size_x))
+        ss_camera_p.set_attribute('image_size_x',str(image_size_x))        
         ss_camera_p.set_attribute('image_size_y',str(image_size_y))
         
         ss_cameras_sa = []
@@ -701,35 +717,20 @@ def main(config,cu_seed,frame_no,hour,human_waypoints,scans_cap):
                 ss_captures = output[1+len(spawned_vehicles):]
 
                 if(save == 1):
-                    # if first_frame:
-                    #     #initial_camera_position = vehicle.get_location() + camera_transform.location
-                    #     initial_camera_rotation = vehicle.get_transform().rotation
-                    #     initial_camera_position = world.get_actors().find(actor_list[0]).get_location() + carla.Location(z=1.63)
-                    #     print("Initial camera position (absolute): {}".format(initial_camera_position))
-                    #     first_frame = False
-
-                    # Choose the next waypoint and update the car location.
-                    #waypoint = random.choice(waypoint.next(1.5))
-                    #vehicle.set_transform(waypoint.transform)
 
                     fps = round(1.0 / snapshot.timestamp.delta_seconds)
-
-                    # Lets save position and rotation (roll pitch yaw) as global values and will process them later...
-                    #rotation_v = np.matmul(rotation_carla(initial_camera_rotation).T,rotation_carla(lidar_scan.transform.rotation))
-                    #translation_v = np.array(translation_carla(vehicle.get_location() + carla.Location(z=1.63)) - translation_carla(initial_camera_position))
-                    #print(translation_v)
-
                     # Save the scans
                     counter+=len(spawned_vehicles)
                     #world.apply_settings(settings)
                     cc = carla.ColorConverter.Depth
                     cc2 = carla.ColorConverter.LogarithmicDepth
                     
-                    for i in np.arange(len(rgb_captures)):
-                        rgb_captures[i].save_to_disk(dataset_path+('cam3/rgb/{}_{}.png').format((step)*len(spawned_vehicles)-len(spawned_vehicles)+ i+frame_no*len(spawned_vehicles),hour)) # Save the scan
+                    if (save_flag):
+                        for i in np.arange(len(rgb_captures)):
+                            rgb_captures[i].save_to_disk(dataset_path+('cam3/rgb/{}_{}_{}_{}.png').format(config['map'],seed,i,hour)) # Save the scan
 
-                    for i in np.arange(len(ss_captures)):
-                        ss_captures[i].save_to_disk(dataset_path+('cam3/ss/{}_{}.png').format((step)*len(spawned_vehicles)-len(spawned_vehicles) + i +frame_no*len(spawned_vehicles),hour))
+                        for i in np.arange(len(ss_captures)):
+                            ss_captures[i].save_to_disk(dataset_path+('cam3/ss/{}_{}_{}_{}.png').format(config['map'],seed,i,hour))
 
                     if counter >= scans_cap:
                         return human_waypoints
@@ -768,30 +769,69 @@ def main(config,cu_seed,frame_no,hour,human_waypoints,scans_cap):
 
         time.sleep(0.5)
 
+import ast
 if __name__ == '__main__':
     
     parser = argparse.ArgumentParser(description='CARLA Visual Odometry Dataset Generator')
     parser.add_argument('--config_file','-c', help='Config file',required=True)
     parser.add_argument('--output_folder','-o', help='Output folder',required=False)
-    
+    parser.add_argument('--seedlog','-s', help='Seed log file',required=False,default=None)
+    parser.add_argument('--steps','-st', help='Step',required=False,default=1)
+    parser.add_argument('--fix_last','-fl', help='Fix last',required=False,default=False)
     args = parser.parse_args()
 
     with(open(args.config_file)) as f:
         config = yaml.safe_load(f)
 
-    step = 65
-    its = 20
-    human_wp = []
-    seeds = np.random.randint(0,10000,its)
-    print(seeds)
-    for seed in seeds:
-        seed = seed.item()
-        human_wp = main(config,seed,step,0,human_wp,10)
-        human_wp = main(config,seed,step,0,human_wp,config['sampling_steps'])
-        human_wp = main(config,seed,step,1,human_wp,config['sampling_steps'])
-        human_wp = main(config,seed,step,2,human_wp,config['sampling_steps'])
-        human_wp = main(config,seed,step,3,human_wp,config['sampling_steps'])
-        #human_wp = main(config,seed,step,3,human_wp,config['sampling_steps'])
-        step+=1
+
+    ## If generating from file:
+    if args.seedlog is not None:
+        human_wp = []
+        
+        with(open(args.seedlog)) as f:
+            if (args.fix_last):
+                last_line = f.readlines()[-1]
+
+                config = ast.literal_eval(last_line)
+                human_wp = main(config,config['seed'],0,human_wp,2,save_flag=False)
+                human_wp = main(config,config['seed'],0,human_wp,config['sampling_steps'])
+                #human_wp = main(config,config['seed'],1,human_wp,config['sampling_steps'])
+                #human_wp = main(config,config['seed'],2,human_wp,config['sampling_steps'])
+                human_wp = main(config,config['seed'],3,human_wp,config['sampling_steps'])
+
+            else:
+                for line in f:
+
+                    config = ast.literal_eval(line)
+                    ##### Generate new images ######
+                    #### By default just generate the same ####
+                    human_wp = main(config,config['seed'],0,human_wp,2,save_flag=False)
+                    human_wp = main(config,config['seed'],0,human_wp,config['sampling_steps'])
+                    #human_wp = main(config,config['seed'],1,human_wp,config['sampling_steps'])
+                    #human_wp = main(config,config['seed'],2,human_wp,config['sampling_steps'])
+                    human_wp = main(config,config['seed'],3,human_wp,config['sampling_steps'])
+
+
+                
+
+                
+    else:
+
+        human_wp = []
+        seeds = np.random.randint(0,10000,args.steps)
+
+        with open('seedlog.txt', 'a') as f:
+            for item in seeds:
+                dict = [config]
+                dict[0]['seed'] = item
+                f.write(str(dict[0])+"\n")
+
+        for seed in seeds:
+            seed = seed.item()
+            human_wp = main(config,seed,0,human_wp,2,save_flag=False)
+            human_wp = main(config,seed,0,human_wp,config['sampling_steps'])
+            human_wp = main(config,seed,1,human_wp,config['sampling_steps'])
+            human_wp = main(config,seed,2,human_wp,config['sampling_steps'])
+            #human_wp = main(config,seed,3,human_wp,config['sampling_steps'])
 
 

@@ -16,13 +16,21 @@ from multiprocessing import Pool
 from PIL import Image
 from utils import get_relative_rotation
 from maths import calculate_relative_rotation
+# try:
+#     sys.path.append(glob.glob('carla/dist/carla-*%d.%d-%s.egg' % (
+#         sys.version_info.major,
+#         sys.version_info.minor,
+#         'win-amd64' if os.name == 'nt' else 'linux-x86_64'))[0])
+# except IndexError:
+#     pass
 try:
-    sys.path.append(glob.glob('carla/dist/carla-*%d.%d-%s.egg' % (
+    sys.path.append(glob.glob('E:\carla-*%d.%d-%s.egg' % (
         sys.version_info.major,
         sys.version_info.minor,
         'win-amd64' if os.name == 'nt' else 'linux-x86_64'))[0])
 except IndexError:
-    pass
+    print(IndexError)
+
 
 import carla
 import random
@@ -270,14 +278,27 @@ def draw_skeleton(buffer, image_w, image_h, boneIndex, points2d, color, size=4):
     except:
         pass
 
-def should_quit():
+
+event_dict = {0: 'No key pressed', 1: 'Next', 2: 'Save', -1: 'Exit'}
+
+def retrieve_key_presses():
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
-            return True
+            return -1
         elif event.type == pygame.KEYUP:
+            print(event.key)
             if event.key == pygame.K_ESCAPE:
-                return True
-    return False
+                return -1
+            elif event.key == pygame.K_n:
+                return 1
+            elif event.key == pygame.K_y:
+                return 2
+            elif event.key == pygame.K_UP:
+                return 3
+            elif event.key == pygame.K_DOWN:
+                return 4
+
+    return 0
 
 def write_image(frame, id, buffer):
     # Save the image using Pillow module.
@@ -358,6 +379,8 @@ def inverse_euler_angles(euler_angles):
     # Return the inverse Euler angles as a vector
     return np.array([inverse_roll, inverse_pitch, inverse_yaw])
 
+import ast
+
 def main():
     argparser = argparse.ArgumentParser(
         description='CARLA Manual Control Client')
@@ -402,6 +425,8 @@ def main():
     ped_bp = random.choice(world.get_blueprint_library().filter("walker.pedestrian.0028"))
     trans = carla.Transform()
     trans.location = world.get_random_location_from_navigation()
+    trans.location = world.get_random_location_from_navigation()
+
     ped = world.spawn_actor(ped_bp, trans)
     
     #walker_controller_bp = world.get_blueprint_library().find('controller.ai.walkerbonecontrol')
@@ -422,104 +447,157 @@ def main():
 
     try:
         pool = Pool(processes=5)
+
+        set_up = True
         # Create a synchronous mode context.
         with CarlaSyncMode(world, camera, fps=30) as sync_mode:
+                
             
             # set the projection matrix
             K = build_projection_matrix(image_w, image_h, fov)
 
             blending = 0
             turning = 0
-            first = True
-            second = 2
+            new_pose_dict = {}
+
+            is_pose_set = False
+
+            dictarray  = []
+            ## Load poses file
+            with open("poses_list.txt", "r") as file:
+                for line in file:
+                    # Convert the string representation of the dictionary to a dictionary object
+                    dictionary = ast.literal_eval(line.strip())
+                    # Append the dictionary to the list
+                    dictarray.append(dictionary)
+
+            load_index = 0
             while True:
-                if should_quit():
+
+                command = retrieve_key_presses()
+                if command == -1:
                     return
                 clock.tick()
 
+                # Check if pose must be stored:
+                if command == 2:
+                    if is_pose_set == True:
+                        #Keep only rotation for each bone in new pose dict:
+                        new_pose_dict = {key: [value['rotation'].pitch,value['rotation'].yaw,value['rotation'].roll] for key, value in new_pose_dict.items()}
 
-                #First get all bones
-                all_bones = ped.get_bones() 
+                        with open("poses_list.txt", "a") as file:
+                            file.write(str(new_pose_dict))
+                            file.write("\n")
+
+                        #Reset new pose dict
+                        is_pose_set = False
+                        new_pose_list = []
+
+                        for bone in original_filtered_bones:
+                            new_pose_list.append((bone.name,carla.Transform(rotation=bone.relative.rotation, location=bone.relative.location)))
+                        bones_setlist = carla.WalkerBoneControlIn(new_pose_list)
                     
+                        ped.set_bones(bones_setlist)
+                        clock.tick()
 
-                #Now Filter and retrieve only the ones we are interested in
-                filter_bones = ['crl_thigh__R','crl_leg__R','crl_foreArm__R','crl_foreArm__L','crl_leg__L','crl_arm__L','crl_arm__R','crl_spine__C','crl_thigh__L','crl_shoulder__L','crl_shoulder__R','crl_neck__C']
+                        continue;
+
+                if command == 1 or set_up == True:
+                    if set_up == False and is_pose_set == True:
+                        is_pose_set = False
+                        print("Reset position")
+                        #Reset new pose dict
+                        new_pose_list = []
+
+                        for bone in original_filtered_bones:
+                            new_pose_list.append((bone.name,carla.Transform(rotation=bone.relative.rotation, location=bone.relative.location)))
+                        bones_setlist = carla.WalkerBoneControlIn(new_pose_list)
+                    
+                        ped.set_bones(bones_setlist)
+                        clock.tick()
+                        continue
 
 
-                filtered_bones = [bone for bone in all_bones.bone_transforms if bone.name in filter_bones]
-                #[  -6.89563443, -22.34184681,  17.18824018],
+                    is_pose_set = True
+                    #First get all bones
+                    all_bones = ped.get_bones() 
 
 
+                    #Now Filter and retrieve only the ones we are interested in
+                    filter_bones = ['crl_thigh__R','crl_leg__R','crl_foreArm__R','crl_foreArm__L','crl_leg__L','crl_arm__L','crl_arm__R','crl_spine__C','crl_thigh__L','crl_shoulder__L','crl_shoulder__R','crl_neck__C']
 
-                new_pose_dict = {
-                                ##Right leg
-                                'crl_thigh__R': {'rotation':sum_euler_angles([56.7500721243956, -16.544053832953992, 25.02675923303483],inverse_euler_angles([15,0,180]),'zxy'), 'location': [0, 0, 0],'parent': 'crl_root'}, #[20.54360794876757, -5.943302146652839, -9.427805053372714],[180,-180,-25]
-                                'crl_leg__R': {'rotation': sum_euler_angles([-31.293895780348507,-14.517304603659372, 29.67655402376227],inverse_euler_angles([0,0,-176]),'zxy'), 'location': [0, 0, 0],'parent': 'crl_thigh__R'},
-                                
-                                ##Left leg
-                                'crl_thigh__L': {'rotation':sum_euler_angles([74.5533496219488, -9.83629245274992, 39.232600391572824],inverse_euler_angles([-15,0,0]),'zxy'), 'location': [0, 0, 0],'parent': 'crl_root'},
-                                'crl_leg__L': {'rotation': sum_euler_angles([0.024881520125725802, 0.005220097453850754, 0.018406008288751004],inverse_euler_angles([0,0,-176]),'zxy'), 'location': [0, 0, 0],'parent':'crl_thigh__L'},
-                                
-                                ##Right arm
-                                #'crl_shoulder__R': {'rotation': sum_euler_angles([0,0,0],[0,-180,0],'xyz'), 'location': [0, 0, 0],'parent': 'crl_shoulder__L'},
-                                #'crl_arm__R': {'rotation': sum_euler_angles([0,0,0],[0,-180,0],'xyz'), 'location': [0, 0, 0],'parent': 'crl_shoulder__L'},
-                                #'crl_foreArm__R': {'rotation':sum_euler_angles([4.738812315757723, 50.04208808972586, 42.94656797471609],[0,0,-180],'xyz'), 'location': [0, 0, 0],'parent': 'crl_shoulder__R'},
 
-                                ##Left arm
-                                #'crl_shoulder__L': {'rotation': sum_euler_angles([-62.64876103012018, 5.223609785809075, 4.273746616340836],inverse_euler_angles([-11,3,0]),'xyz'), 'location': [0, 0, 0],'parent': 'crl_shoulder__L'},
-                                'crl_arm__L': {'rotation': sum_euler_angles([-15.586735638399256, 2.153065908618747, 0.9271226181481296],inverse_euler_angles([11.35, -1.66, -180]),'xyz'), 'location': [0,0,0],'parent': 'crl_shoulder__L'},
-                                'crl_foreArm__L': {'rotation':sum_euler_angles([78.73643752256984, 166.60799795539603, 173.4785571627607],inverse_euler_angles([-15,0,0]),'xyz'), 'location': [0, 0, 0],'parent': 'crl_shoulder__R'},
+                    filtered_bones = [bone for bone in all_bones.bone_transforms if bone.name in filter_bones]
 
-                                #'crl_spine__C': {'rotation':sum_euler_angles([-9.527387472475734, 2.1170614985602634, 7.553654895143941],[0,0,0],'xyz'), 'location': [0, 0, 0],'parent': 'crl_root'},
-                                #'crl_hips__C': {'rotation':sum_euler_angles([-9.527387472475734, 2.1170614985602634, 7.553654895143941],[0,0,0],'xyz'), 'location': [0, 0, 0],'parent': 'crl_root'},
+                    #Keep a copy of original filtered bones      
+                    if set_up == True:      
+                        #convert to dict for easier use
+                        original_filtered_bones = [filtered_bones[i] for i in range(len(filtered_bones))]
+                        set_up = False
 
-                                 }
-                
+                    # new_pose_dict = {
+                    #                 ##Right leg
+                    #                 'crl_thigh__R': {'rotation':sum_euler_angles([56.7500721243956, -16.544053832953992, 25.02675923303483],inverse_euler_angles([15,0,180]),'zxy'), 'location': [0, 0, 0],'parent': 'crl_root'}, #[20.54360794876757, -5.943302146652839, -9.427805053372714],[180,-180,-25]
+                    #                 'crl_leg__R': {'rotation': sum_euler_angles([-31.293895780348507,-14.517304603659372, 29.67655402376227],inverse_euler_angles([0,0,-176]),'zxy'), 'location': [0, 0, 0],'parent': 'crl_thigh__R'},
+                                    
+                    #                 ##Left leg
+                    #                 'crl_thigh__L': {'rotation':sum_euler_angles([74.5533496219488, -9.83629245274992, 39.232600391572824],inverse_euler_angles([-15,0,0]),'zxy'), 'location': [0, 0, 0],'parent': 'crl_root'},
+                    #                 'crl_leg__L': {'rotation': sum_euler_angles([0.024881520125725802, 0.005220097453850754, 0.018406008288751004],inverse_euler_angles([0,0,-176]),'zxy'), 'location': [0, 0, 0],'parent':'crl_thigh__L'},
+                                    
+                    #                 ##Right arm
+                    #                 #'crl_shoulder__R': {'rotation': sum_euler_angles([0,0,0],[0,-180,0],'xyz'), 'location': [0, 0, 0],'parent': 'crl_shoulder__L'},
+                    #                 #'crl_arm__R': {'rotation': sum_euler_angles([0,0,0],[0,-180,0],'xyz'), 'location': [0, 0, 0],'parent': 'crl_shoulder__L'},
+                    #                 #'crl_foreArm__R': {'rotation':sum_euler_angles([4.738812315757723, 50.04208808972586, 42.94656797471609],[0,0,-180],'xyz'), 'location': [0, 0, 0],'parent': 'crl_shoulder__R'},
 
-                arml_l = np.random.randint(-45,0)
-                arml_r = np.random.randint(-90,0)
-                forearm_r = np.random.randint(-30,60)
-                new_pose_dict = {
-                                ##Right leg
-                                 ##Right leg
-                                'crl_thigh__R': {'rotation':[0,0,np.random.randint(-60,60)], 'location': [0, 0, 0],'parent': 'crl_root'}, #[20.54360794876757, -5.943302146652839, -9.427805053372714],[180,-180,-25]
-                                'crl_leg__R': {'rotation':[0,0,np.random.randint(0,90)], 'location': [0, 0, 0],'parent': 'crl_root'},
-                                
-                                ##Left leg
-                                'crl_thigh__L': {'rotation':[0,0,np.random.randint(-60,60)], 'location': [0, 0, 0],'parent': 'crl_root'},
-                                'crl_leg__L': {'rotation':[0,0,np.random.randint(0,90)], 'location': [0, 0, 0],'parent':'crl_root'},
+                    #                 ##Left arm
+                    #                 #'crl_shoulder__L': {'rotation': sum_euler_angles([-62.64876103012018, 5.223609785809075, 4.273746616340836],inverse_euler_angles([-11,3,0]),'xyz'), 'location': [0, 0, 0],'parent': 'crl_shoulder__L'},
+                    #                 'crl_arm__L': {'rotation': sum_euler_angles([-15.586735638399256, 2.153065908618747, 0.9271226181481296],inverse_euler_angles([11.35, -1.66, -180]),'xyz'), 'location': [0,0,0],'parent': 'crl_shoulder__L'},
+                    #                 'crl_foreArm__L': {'rotation':sum_euler_angles([78.73643752256984, 166.60799795539603, 173.4785571627607],inverse_euler_angles([-15,0,0]),'xyz'), 'location': [0, 0, 0],'parent': 'crl_shoulder__R'},
 
-                                ##Right arm
-                                #'crl_shoulder__R': {'rotation':[0,0,0], 'location': [0, 0, 0],'parent': 'crl_root'},
-                                #'crl_arm__R': {'rotation':[-45,45,180], 'location': [0, 0, 0],'parent': 'crl_root'}, # de 0 a 90 el ptich
-                                'crl_foreArm__R': {'rotation':[0,forearm_r,0], 'location': [0, 0, 0],'parent': 'crl_root'},
+                    #                 #'crl_spine__C': {'rotation':sum_euler_angles([-9.527387472475734, 2.1170614985602634, 7.553654895143941],[0,0,0],'xyz'), 'location': [0, 0, 0],'parent': 'crl_root'},
+                    #                 #'crl_hips__C': {'rotation':sum_euler_angles([-9.527387472475734, 2.1170614985602634, 7.553654895143941],[0,0,0],'xyz'), 'location': [0, 0, 0],'parent': 'crl_root'},
 
-                                ##Left arm
-                                #'crl_shoulder__L': {'rotation':[0,0,90], 'location': [0, 0, 0],'parent': 'crl_root'},
-                                'crl_arm__L': {'rotation':[arml_l,0,arml_l], 'location': [0, 0, 0],'parent': 'crl_root'},#de 45 a 45 el pitch
-                                'crl_foreArm__L': {'rotation':[0,np.random.randint(-60,30),0], 'location': [0, 0, 0],'parent': 'crl_root'},
+                    #                  }
 
-                                ##Spine
-                                'crl_spine__C': {'rotation':[np.random.randint(-75,75),0,0], 'location': [0, 0, 0],'parent': 'crl_root'},
+                    ### Random pose generation ###
+                    
+                    thigh_r = np.random.randint(-60,60)
+                    thigh_l = np.random.randint(-60,60)
+                    leg_r = np.random.randint(0,90)
+                    leg_l = np.random.randint(0,90)
+                    arml_l = np.random.randint(-45,0)
+                    crl_forearm_l = np.random.randint(-60,30)
+                    forearm_r = np.random.randint(-30,60)
+                    crl_spine_c = np.random.randint(-75,75)
+                    crl_neck_c = np.random.randint(-30,30)
 
-                                ##Neck
-                                'crl_neck__C': {'rotation':[0,np.random.randint(-30,30),0], 'location': [0, 0, 0],'parent': 'crl_root'},
+                    new_pose_dict = {
+                                    ##Right leg
+                                    'crl_thigh__R': {'rotation':[0,0,thigh_r], 'location': [0, 0, 0],'parent': 'crl_root'}, #[20.54360794876757, -5.943302146652839, -9.427805053372714],[180,-180,-25]
+                                    'crl_leg__R': {'rotation':[0,0,leg_r], 'location': [0, 0, 0],'parent': 'crl_root'},
+                                    
+                                    ##Left leg
+                                    'crl_thigh__L': {'rotation':[0,0,thigh_l], 'location': [0, 0, 0],'parent': 'crl_root'},
+                                    'crl_leg__L': {'rotation':[0,0,leg_l], 'location': [0, 0, 0],'parent':'crl_root'},
 
-                }   
-                
-                ## Spine C probablemente no va por tema de usar el 7 como el cero
-                ## Faltaria hacer puntos intermedios para los hombros
-                ## zZZzZzZZ z
-                
-                modified_bones_dict = {}
-                
-                root_bone = [bone for bone in all_bones.bone_transforms if bone.name == 'crl_root'][0]
-                og_offset = np.array([root_bone.world.rotation.pitch,root_bone.world.rotation.yaw,root_bone.world.rotation.roll])
-                if(first):
-                    print( [bone for bone in all_bones.bone_transforms if bone.name == 'crl_thigh__L'][0])
+                                    ##Right arm
+                                    #'crl_shoulder__R': {'rotation':[0,0,0], 'location': [0, 0, 0],'parent': 'crl_root'},
+                                    #'crl_arm__R': {'rotation':[-45,45,180], 'location': [0, 0, 0],'parent': 'crl_root'}, # de 0 a 90 el ptich
+                                    'crl_foreArm__R': {'rotation':[0,forearm_r,0], 'location': [0, 0, 0],'parent': 'crl_root'},
 
-                    print( [bone for bone in all_bones.bone_transforms if bone.name == 'crl_thigh__R'][0])
+                                    ##Left arm
+                                    #'crl_shoulder__L': {'rotation':[0,0,90], 'location': [0, 0, 0],'parent': 'crl_root'},
+                                    'crl_arm__L': {'rotation':[arml_l,0,arml_l], 'location': [0, 0, 0],'parent': 'crl_root'},#de 45 a 45 el pitch
+                                    'crl_foreArm__L': {'rotation':[0,crl_forearm_l,0], 'location': [0, 0, 0],'parent': 'crl_root'},
 
+                                    ##Spine
+                                    'crl_spine__C': {'rotation':[crl_spine_c,0,0], 'location': [0, 0, 0],'parent': 'crl_root'},
+
+                                    ##Neck
+                                    'crl_neck__C': {'rotation':[0,crl_neck_c,0], 'location': [0, 0, 0],'parent': 'crl_root'},
+
+                    } 
+                                    
                     #Set the new pose
                     new_bones = []
                     for filtered_bone in filtered_bones:
@@ -560,40 +638,42 @@ def main():
                             bone_t = (filtered_bone.name, carla.Transform(rotation=new_pose_dict[filtered_bone.name]['rotation'], location=new_pose_dict[filtered_bone.name]['location']))
                             new_bones.append(bone_t)
                     
-                    
-                    #Set bones
-                    ft = [-23.75842191, -38.39732904,-28.83638448]
-                    fd = [-0.09499745, -0.42752922,-0.05589557]
-                    
-                    st = [-1.45234558,  0.77358378, 2.63925492]
-                    sd = [ 0.0153916 ,  -0.4361881, -0.12572408 ]
-                    tt = [ 43.09562088, -26.70386462, -18.69296002]
-                    td = [-0.01794255, +0.40565217,+0.17686112]
-                    fot = [-6.76935755, -7.0954407 ,  7.52290112]
-
-                    first_tuple = ('crl_leg__R', carla.Transform(rotation=carla.Rotation(*st), location=carla.Location(*sd)))
-
-                    third_tuple = ('crl_leg__R', carla.Transform(rotation=carla.Rotation(*tt), location=carla.Location(*td)))
-
-
                     bones_setlist = carla.WalkerBoneControlIn(new_bones)
-                
                     ped.set_bones(bones_setlist)
-                    first = False
 
-                #print(ped.get_bones())
-                # make some transition from custom pose to animation
+                if command == 3 or command == 4:
+                    #Get new index
+                    if command == 3:
+                        load_index = (load_index + 1) if (load_index + 1) < len(dictarray) else 0
+                    elif command == 4:
+                        load_index = (load_index - 1) if  (load_index - 1) > 0 else len(dictarray) - 1
+
+                    #Set the new pose
+                    new_pose_dict = dictarray[load_index]
+                    print("Index:",load_index)
+
+                    print("New pose dict",new_pose_dict)
+                    for filtered_bone in filtered_bones:
+                        if  filtered_bone.name in new_pose_dict:
+                            r_new = new_pose_dict[filtered_bone.name]
+                            #rotation_vector = sum_euler_angles(r_new, [filtered_bone.relative.rotation.pitch,filtered_bone.relative.rotation.yaw,filtered_bone.relative.rotation.roll],'zxy')
+                            limb_length = vector_norm(filtered_bone.relative.location)
+                            new_loc = [filtered_bone.relative.location.x, filtered_bone.relative.location.y, filtered_bone.relative.location.z]
+                            transform = {'rotation': carla.Rotation(*r_new), 'location': carla.Location(*new_loc)}
+                            bone_t = (filtered_bone.name, carla.Transform(rotation=transform['rotation'], location=transform['location']))
+                            new_bones.append(bone_t)
+                    
+                    bones_setlist = carla.WalkerBoneControlIn(new_bones)
+                    ped.set_bones(bones_setlist)
+                    is_pose_set = True
+                        
+
+
+
                 ped.blend_pose(1)
-                all_bones = ped.get_bones()
-                if second > 0:
-                    second -= 1
-                    print([bone for bone in all_bones.bone_transforms if bone.name == 'crl_root'][0])
-                    print([bone for bone in all_bones.bone_transforms if bone.name == 'crl_thigh__R'][0])
-                    print([bone for bone in all_bones.bone_transforms if bone.name == 'crl_leg__R'][0])
-
 
                 # move the pedestrian
-                blending += 0.015
+                #blending += 0.015
                 turning += 0.009
 
                 # move camera around

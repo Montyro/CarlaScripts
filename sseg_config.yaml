@@ -1,16 +1,17 @@
 sampling_steps: 20
 
-seed: 4499012
-
 ##Per map seeds
 #Towh10hd opt 242424
 #Town01 1
 #Toen02 2
 
 
-map: "Town15"
+map: "Town10HD"
 vehicle_amounts:
   - cars : 12
-  - motorbikes : 10
-  - bikes : 10
-  - trucks: 4
+  - motorbikes : 2
+  - bikes : 3
+  - trucks: 2
+  - buses: 2
+
+poses_file: "poses_list.txt"

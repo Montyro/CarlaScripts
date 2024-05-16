@@ -1,0 +1,1 @@
+{'sampling_steps': 20, 'map': 'Town10HD', 'vehicle_amounts': [{'cars': 12}, {'motorbikes': 2}, {'bikes': 3}, {'trucks': 2}, {'buses': 2}], 'poses_file': 'poses_list.txt', 'seed': 2727}
