@@ -25,9 +25,26 @@ import argparse
 import yaml
 import re
 
+import time
+import psutil
+import subprocess
+import os
+
+def is_process_running(process_name):
+    """Check if there is any running process that contains the given name."""
+    for proc in psutil.process_iter(['pid', 'name', 'exe']):
+        try:
+            if process_name.lower() in proc.info['name'].lower() or \
+               (proc.info['exe'] and process_name.lower() in proc.info['exe'].lower()):
+                return True
+        except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+            pass
+    return False
+
+
 ########################### Change to the location of PythonAPI in your computer ####################
 try:
-    sys.path.append(glob.glob('E:\carla-*%d.%d-%s.egg' % (
+    sys.path.append(glob.glob('D:\carla-*%d.%d-%s.egg' % (
         sys.version_info.major,
         sys.version_info.minor,
         'win-amd64' if os.name == 'nt' else 'linux-x86_64'))[0])
@@ -791,7 +808,6 @@ if __name__ == '__main__':
         with(open(args.seedlog)) as f:
             if (args.fix_last):
                 last_line = f.readlines()[-1]
-
                 config = ast.literal_eval(last_line)
                 human_wp = main(config,config['seed'],0,human_wp,2,save_flag=False)
                 human_wp = main(config,config['seed'],0,human_wp,config['sampling_steps'])
@@ -801,7 +817,6 @@ if __name__ == '__main__':
 
             else:
                 for line in f:
-
                     config = ast.literal_eval(line)
                     ##### Generate new images ######
                     #### By default just generate the same ####
@@ -810,11 +825,7 @@ if __name__ == '__main__':
                     #human_wp = main(config,config['seed'],1,human_wp,config['sampling_steps'])
                     #human_wp = main(config,config['seed'],2,human_wp,config['sampling_steps'])
                     human_wp = main(config,config['seed'],3,human_wp,config['sampling_steps'])
-
-
-                
-
-                
+    
     else:
 
         human_wp = []
@@ -828,10 +839,33 @@ if __name__ == '__main__':
 
         for seed in seeds:
             seed = seed.item()
-            human_wp = main(config,seed,0,human_wp,2,save_flag=False)
-            human_wp = main(config,seed,0,human_wp,config['sampling_steps'])
-            human_wp = main(config,seed,1,human_wp,config['sampling_steps'])
-            human_wp = main(config,seed,2,human_wp,config['sampling_steps'])
-            #human_wp = main(config,seed,3,human_wp,config['sampling_steps'])
+
+            try:
+                human_wp = main(config,seed,0,human_wp,2,save_flag=False) 
+                human_wp = main(config,seed,0,human_wp,config['sampling_steps'])
+                human_wp = main(config,seed,1,human_wp,config['sampling_steps'])
+                human_wp = main(config,seed,2,human_wp,config['sampling_steps'])
+                human_wp = main(config,seed,3,human_wp,config['sampling_steps'])
+            except Exception as e:
+                # Print the exception
+                print(f"An error occurred: {e}")
+                # process_name = "CarlaUE4.exe"
+                # exe_path = r"C:/Users/jmr/Documents/WindowsNoEditor/CarlaUE4.exe"
+
+                # if not is_process_running(process_name):
+                #     print(f"{process_name} is not running. Starting it now...")
+                #     subprocess.Popen(exe_path)
+                # else:
+                #     print(f"{process_name} is already running.")
+                # time.sleep(30)
+
+                # human_wp = main(config,seed,0,human_wp,2,save_flag=False) 
+                # human_wp = main(config,seed,0,human_wp,config['sampling_steps'])
+                # human_wp = main(config,seed,1,human_wp,config['sampling_steps'])
+                # human_wp = main(config,seed,2,human_wp,config['sampling_steps'])
+                # human_wp = main(config,seed,3,human_wp,config['sampling_steps'])
+            
+
+                
 
 
